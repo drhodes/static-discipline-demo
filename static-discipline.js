@@ -8,6 +8,7 @@ const nil = null;
 function ScrollBarV(paper) {
     var self = {
         path: nil
+        
     };
     var x = 20;
     var y = 50;
@@ -15,22 +16,90 @@ function ScrollBarV(paper) {
     var p2 = new paper.Point(x+30, y+580);
     self.path = new paper.Path.Rectangle(p1, p2);
     self.path.fillColor = '#e3e3e3';
-    
+
+    self.init = function() {
+        // 
+    };
+
+    self.init();
     return self;
 }
 
 // -----------------------------------------------------------------------------
 function ScrollBarH(paper) {
     var self = {
-        path: nil
+        state: "idle",
+        path: nil,
+        sliderVil: nil,
+        sliderVih: nil
     };
-    var x = 50;
-    var y = 630;
-    var p1 = new paper.Point(x, y);
-    var p2 = new paper.Point(x+580, y+30);
-    self.path = new paper.Path.Rectangle(p1, p2);
-    self.path.fillColor = '#e3e3e3';
+
+    // returns [Closer slider, Furthor slider]
+    self.ClosestSlider = function(x) {
+        var vilX = self.sliderVil.X();
+        var vihX = self.sliderVih.X();
+
+        var dVil = Math.abs(x - vilX);
+        var dVih = Math.abs(x - vihX);
+        
+        if (dVil <= dVih) {
+            return [self.sliderVil, self.sliderVih];
+        } else {
+            return [self.sliderVih, self.sliderVil];
+        }
+    };
+
     
+    self.init = function() {
+        // setup the path.
+        var x = 50;
+        var y = 630;
+        var p1 = new paper.Point(x, y);
+        var p2 = new paper.Point(x+580, y+30);
+        self.path = new paper.Path.Rectangle(p1, p2);
+        self.path.fillColor = '#b3b3b3';
+        self.path.opacity = .3;
+        
+        // setup the event callbacks.
+        self.path.on('mouseenter', function(evt) {
+        });
+        self.path.on('mouseleave', function() {
+            // deselect bots sliders.
+            self.sliderVil.UnHighlight();
+            self.sliderVih.UnHighlight();
+            
+        });
+        self.path.on('mousedown', function(evt) {
+            // move the closest slider to this mouse position.
+            var x = evt.point.x;
+            var pair = self.ClosestSlider(x);
+            pair[0].MoveTo(x-50);
+        });    
+        self.path.on('mousedrag', function(evt) {
+            // move the closest slider to this mouse position.
+            var x = evt.point.x;
+            var pair = self.ClosestSlider(x);
+
+            // don't drag a slider if the cursor is out of range.
+            if (x > 50 && x < 680) {
+                pair[0].MoveTo(x-50);
+            }
+        });    
+        self.path.on('mouseup', function(evt) {
+        });    
+        self.path.on('mousemove', function(evt) {
+            // Highlight the closest slider.
+            var x = evt.point.x;
+            var pair = self.ClosestSlider(x);
+            pair[0].Highlight();
+            pair[1].UnHighlight();
+        });
+        
+        self.IsMoving = function() {
+            return self.state == 'moving';
+        };
+    };
+    self.init();
     return self;
 }
 
@@ -38,29 +107,20 @@ function ScrollBarH(paper) {
 // -----------------------------------------------------------------------------
 function sliderEvents(self) {
     self.state = "idle";
-    self.mousePos = nil; // filthy hack.
+    // self.mousePos = nil; // filthy hack. This is a store for the last
+    //                      // mouse position. since there's no access to
+    //                      // mouse events from paper.js, the callbacks
+    //                      // mutate this.  
     
-    self.path.on('mouseenter', function(evt) {
-        self.mousePos = evt.point;
+    self.Highlight = function() {
         self.path.fillColor = 'blue';
         self.line.strokeColor = 'blue';
-    });
-    self.path.on('mouseleave', function() {
+    };
+
+    self.UnHighlight = function() {
         self.path.fillColor = 'black';
         self.line.strokeColor = 'lightgray';
-        self.state = 'idle';
-    });
-    self.path.on('mousedown', function(evt) {
-        self.mousePos = evt.point;
-        self.state = 'moving';
-    });    
-    self.path.on('mouseup', function(evt) {
-        self.mousePos = evt.point;
-        self.state = 'idle';
-    });    
-    self.path.on('mousedrag', function(evt) {
-        self.mousePos = evt.point;
-    });
+    };
     
     self.IsMoving = function() {
         return self.state == 'moving';
@@ -243,8 +303,8 @@ function Demo(paper, width, height) {
     var self = {
         width: width,
         height: height,
-        scrollBarV: ScrollBarV(paper),
-        scrollBarH: ScrollBarH(paper),
+        scrollBarV: nil, 
+        scrollBarH: nil, 
         background: nil,
         sliderVil: nil,
         sliderViH: nil,
@@ -272,12 +332,21 @@ function Demo(paper, width, height) {
         
         self.sliderVih = SliderVih(paper);
         self.sliderVih.MoveTo(200);
-        
+               
         self.sliderVoh = SliderVoh(paper);
         self.sliderVoh.MoveTo(300);
         
         self.sliderVol = SliderVol(paper);
         self.sliderVol.MoveTo(100);
+        
+        self.scrollBarH = ScrollBarH(paper);
+        self.scrollBarV = ScrollBarV(paper),
+
+        // TODO. refactor. scrollbars should own sliders.
+        self.scrollBarV.sliderVol = self.sliderVol;
+        self.scrollBarV.sliderVoh = self.sliderVoh;
+        self.scrollBarH.sliderVil = self.sliderVil;
+        self.scrollBarH.sliderVih = self.sliderVih;
     };
 
     
@@ -333,8 +402,6 @@ function Demo(paper, width, height) {
             // ok this is all wrong!
             // listen to scrollbars to move the sliders.
             // this will make everything work.
-            
-            console.log("asdf");
             var offset = 50;
             self.sliderVil.MoveTo(self.sliderVil.mousePos.x - offset);
             //console.log(paper.Event.lastPoint);
