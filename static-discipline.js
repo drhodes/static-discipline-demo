@@ -2,23 +2,77 @@
 
 const LOGIC_LEVEL_HI = 5;
 const LOGIC_LEVEL_LO = 0;
+const PLOT_TOP = 50;
+const PLOT_LEFT = 50;
+const PLOT_RIGHT = 630;
+const PLOT_BOTTOM = 630;
 const nil = null;
 
 // -----------------------------------------------------------------------------
 function ScrollBarV(paper) {
     var self = {
-        path: nil
-        
+        path: nil,
+        sliderVol: nil,
+        sliderVoh: nil
     };
-    var x = 20;
-    var y = 50;
-    var p1 = new paper.Point(x, y);
-    var p2 = new paper.Point(x+30, y+580);
-    self.path = new paper.Path.Rectangle(p1, p2);
-    self.path.fillColor = '#e3e3e3';
 
+    //returns [Closer slider, Furthor slider]
+    self.ClosestSlider = function(y) {
+        var volY = self.sliderVol.Y();
+        var vohY = self.sliderVoh.Y();
+
+        var dVol = Math.abs(y - volY);
+        var dVoh = Math.abs(y - vohY);
+        
+        if (dVol <= dVoh) {
+            return [self.sliderVol, self.sliderVoh];
+        } else {
+            return [self.sliderVoh, self.sliderVol];
+        }
+    };
+    
     self.init = function() {
-        // 
+        var x = 20;
+        var y = 50;
+        var p1 = new paper.Point(x, y);
+        var p2 = new paper.Point(x+30, y+580);
+        self.path = new paper.Path.Rectangle(p1, p2);
+        self.path.fillColor = '#b3b3b3';
+        self.path.opacity = .3;
+        
+        // setup the event callbacks.
+        self.path.on('mouseleave', function() {
+            // deselect bots sliders.
+            self.sliderVol.UnHighlight();
+            self.sliderVoh.UnHighlight();
+        });
+        self.path.on('mousedrag', function(evt) {
+            // move the closest slider to this mouse position.
+            var y = evt.point.y;
+            var slider = self.ClosestSlider(y)[0];
+
+            // don't drag a slider if the cursor is out of range.
+            if (y > 50 && y < 640) {
+                slider.MoveTo(640-y);
+            }
+        });    
+        self.path.on('mouseup', function(evt) {
+        });    
+        self.path.on('mousemove', function(evt) {
+            // Highlight the closest slider.
+            var y = evt.point.y;
+            var pair = self.ClosestSlider(y);
+            pair[0].Highlight();
+            pair[1].UnHighlight();
+        });
+        self.path.on('mousedown', function(evt) {
+            // move the closest slider to this mouse position.
+            var y = evt.point.y;
+            var pair = self.ClosestSlider(y);
+            pair[0].MoveTo(640-y);
+        });    
+
+        
     };
 
     self.init();
@@ -61,20 +115,21 @@ function ScrollBarH(paper) {
         self.path.opacity = .3;
         
         // setup the event callbacks.
-        self.path.on('mouseenter', function(evt) {
-        });
         self.path.on('mouseleave', function() {
             // deselect bots sliders.
             self.sliderVil.UnHighlight();
             self.sliderVih.UnHighlight();
             
         });
+
         self.path.on('mousedown', function(evt) {
             // move the closest slider to this mouse position.
             var x = evt.point.x;
             var pair = self.ClosestSlider(x);
             pair[0].MoveTo(x-50);
         });    
+
+        
         self.path.on('mousedrag', function(evt) {
             // move the closest slider to this mouse position.
             var x = evt.point.x;
@@ -84,8 +139,6 @@ function ScrollBarH(paper) {
             if (x > 50 && x < 680) {
                 slider.MoveTo(x-50);
             }
-        });    
-        self.path.on('mouseup', function(evt) {
         });    
         self.path.on('mousemove', function(evt) {
             // Highlight the closest slider.
@@ -101,12 +154,6 @@ function ScrollBarH(paper) {
 
 // -----------------------------------------------------------------------------
 function sliderEvents(self) {
-    self.state = "idle";
-    // self.mousePos = nil; // filthy hack. This is a store for the last
-    //                      // mouse position. since there's no access to
-    //                      // mouse events from paper.js, the callbacks
-    //                      // mutate this.  
-    
     self.Highlight = function() {
         self.path.fillColor = 'blue';
         self.line.strokeColor = 'blue';
@@ -116,11 +163,6 @@ function sliderEvents(self) {
         self.path.fillColor = 'black';
         self.line.strokeColor = 'lightgray';
     };
-    
-    self.IsMoving = function() {
-        return self.state == 'moving';
-    };
-    
 };
 
 // -----------------------------------------------------------------------------
@@ -243,6 +285,13 @@ function SliderVoh(paper) {
         self.SetY(y);
         self.path.position = new paper.Point(self.x, self.y);
         // draw the line
+        self.UpdateLine(y);
+    };
+
+    self.UpdateLine = function(y) {
+        if (self.line != nil) {
+            self.line.remove();
+        }
         var from = new paper.Point(self.x+15, self.y+5);
         var to = new paper.Point(self.x+595, self.y+5);
         self.line = new paper.Path.Line(from, to);
@@ -271,13 +320,14 @@ function SliderVol(paper) {
     };
 
     self.SetY = function(y) {
-        return self.y = 635 - y;
+        return self.y = 640 - y;
     };  
     self.Y = function() {
         return self.y;
     };
     
-    self.MoveTo = function(y) {        
+    self.MoveTo = function(y) {
+        y-=5;
         self.SetY(y);
         self.path.position = new paper.Point(self.x, self.y);
         // draw the line
@@ -301,6 +351,7 @@ function SliderVol(paper) {
 
 // -----------------------------------------------------------------------------
 function RandomTransferFunction(paper, demo) {
+    
     var self = {
         path: nil
     };
@@ -308,28 +359,47 @@ function RandomTransferFunction(paper, demo) {
     self.Update = function(paper, demo) {
         // randomPoint on segment (0, voh) -> (0, LOGIC_LEVEL_HI)
         var x1 = 50;
-        var y1 = randomRangeInt(60, demo.sliderVoh.Y() - 10);
+        var y1 = randomRangeInt(50, demo.sliderVoh.Y());
         var p1 = new paper.Point(x1, y1);
         // randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
         var x2 = demo.sliderVil.X() + 5;
-        var y2 = randomRangeInt(60, demo.sliderVoh.Y() - 10);
+        var y2 = randomRangeInt(50, demo.sliderVoh.Y());
         var p2 = new paper.Point(x2, y2);
         // randomPoint on segment (vih, 0) -> (vil, Vol)
         var x3 = demo.sliderVih.X() - 5;
-        var y3 = randomRangeInt(demo.sliderVol.Y(), 620);
+        var y3 = randomRangeInt(demo.sliderVol.Y(), PLOT_BOTTOM);
         var p3 = new paper.Point(x3, y3);
         // randomPoint on segment (LOGIC_LEVEL_HI, 0) -> (LOGIC_LEVEL_HI, Vol)
-        var x4 = 650;
-        var y4 = randomRangeInt(demo.sliderVol.Y(), 620);
+        var x4 = PLOT_RIGHT;
+        var y4 = randomRangeInt(demo.sliderVol.Y(), PLOT_BOTTOM);
         var p4 = new paper.Point(x4, y4);
         
         if (self.path != nil) {
             self.path.remove();
         }
         self.path = new paper.Path.Line(p1, p2);
+
+        // find a couple more points between vil and vih
+        // sort them by vi
+        var vil = demo.sliderVil.X() + 5;
+        var vih = demo.sliderVih.X() - 5;
+        var ps = [];
+        while(Math.random() > .5) {
+            var rx = randomRangeInt(vil, vih);
+            var ry = randomRangeInt(PLOT_TOP, PLOT_BOTTOM);
+            ps.push(new paper.Point(rx, ry));
+        }
+        ps.sort(function(a, b) {
+            return a.x - b.x;
+        });
+        
+        for (var i in ps) {
+            self.path.lineTo(ps[i]);
+        }
+        
         self.path.lineTo(p3);
         self.path.lineTo(p4);
-        self.path.strokeColor = "white";
+        self.path.strokeColor = "BLACK";
         self.path.strokeWidth = 2;
     };
     
@@ -379,7 +449,7 @@ function Demo(paper, width, height) {
         self.sliderVol.MoveTo(100);
         
         self.scrollBarH = ScrollBarH(paper);
-        self.scrollBarV = ScrollBarV(paper),
+        self.scrollBarV = ScrollBarV(paper);
 
         // TODO. refactor. scrollbars should own sliders.
         self.scrollBarV.sliderVol = self.sliderVol;
@@ -440,7 +510,6 @@ function Demo(paper, width, height) {
     };
 
     self.UpdateTransfer = function() {
-        // get a y value between Voh and the LOGIC_LEVEL_HI
         self.transferFunc.Update(paper, self);
     };    
     self.initBackground();
@@ -448,13 +517,6 @@ function Demo(paper, width, height) {
     self.initTranferFunc();
     return self;
 }
-
-// Generating a random transfer function.
-// choose an inverter or a buffer.
-// it's going to be a spline of somethign similar.
-// 
-
-
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
@@ -476,7 +538,6 @@ window.onload = function() {
 };
 
 // -----------------------------------------------------------------------------
-// 
 function Fun(paper) {
     var self = {
         counter: 100,
@@ -552,24 +613,8 @@ function Fun(paper) {
     return self;
 }
 
-//-----------------------------------------------------------------------------
-
-
 // -------------------------------------------------------
-// helper functions and
-
-
-// https://stackoverflow.com/questions/15313418/javascript-assert
-// thanks T.J. Crowder
-function assert(condition, message) {
-    if (!condition) {
-        message = message || "Assertion failed";
-        if (typeof Error !== "undefined") {
-            throw new Error(message);
-        }
-        throw message; // Fallback
-    }
-}
+// helper functions 
 
 function randomRangeInt(a, b) {
     var delta = b - a;
