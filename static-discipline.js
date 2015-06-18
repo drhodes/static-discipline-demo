@@ -100,7 +100,8 @@ function TransferPlot(top, left) {
 			var x = left
 			var y = top
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+(PLOT_RIGHT-PLOT_LEFT), y+30);
+			var p2 = new paper.Point(x+(PLOT_RIGHT - PLOT_LEFT),
+									 y+(PLOT_LEFT - SLIDER_BREADTH)); // 30
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#b3b3b3';
 			self.path.opacity = .3;
