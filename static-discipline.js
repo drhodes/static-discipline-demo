@@ -1,15 +1,21 @@
-/* This is a demonstration of the static discipline */
-function StaticDiscipline() {	
+
+// Plot of the transfer function containing the user controls
+// 
+function TransferPlot(top, left) {	
 	const LOGIC_LEVEL_HI = 5;
 	const LOGIC_LEVEL_LO = 0;
-	const PLOT_TOP = 50;
-	const PLOT_LEFT = 50;
-	const PLOT_RIGHT = 630;
-	const PLOT_BOTTOM = 630;
+	var PLOT_TOP = top;
+	var PLOT_LEFT = left;
+	var PLOT_WIDTH = 580;
+	var PLOT_HEIGHT = 580;
+	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
+	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
+	const SLIDER_THICK = 10;
+	const SLIDER_BREADTH = 20;
 	const nil = null;
 	
 	// -----------------------------------------------------------------------------
-	function ScrollBarV(paper) {
+	function ScrollBarV(paper, left, top) {
 		var self = {
 			path: nil,
 			sliderVol: nil,
@@ -32,10 +38,12 @@ function StaticDiscipline() {
 		};
 		
 		self.init = function() {
-			var x = 20;
-			var y = 50;
+			var x = left;
+			var y = top;
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+30, y+580);
+			var p2 = new paper.Point(x + PLOT_LEFT - SLIDER_BREADTH,
+									 y + PLOT_BOTTOM - PLOT_TOP);
+			
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#b3b3b3';
 			self.path.opacity = .3;
@@ -52,8 +60,8 @@ function StaticDiscipline() {
 				var slider = self.ClosestSlider(y)[0];
 
 				// don't drag a slider if the cursor is out of range.
-				if (y > 50 && y < PLOT_BOTTOM-10) {
-					slider.MoveTo(640-y);
+				if (y > left && y < PLOT_BOTTOM - SLIDER_THICK) {
+					slider.MoveTo(PLOT_BOTTOM + SLIDER_THICK - y);
 				}
 			});    
 			self.path.on('mouseup', function(evt) {
@@ -69,7 +77,7 @@ function StaticDiscipline() {
 				// move the closest slider to this mouse position.
 				var y = evt.point.y;
 				var pair = self.ClosestSlider(y);
-				pair[0].MoveTo(640-y);
+				pair[0].MoveTo(PLOT_BOTTOM+SLIDER_THICK-y);
 			});    
 
 			
@@ -80,35 +88,19 @@ function StaticDiscipline() {
 	}
 
 	// -----------------------------------------------------------------------------
-	function ScrollBarH(paper) {
+	function ScrollBarH(paper, left, top) {
 		var self = {
 			path: nil,
 			sliderVil: nil,
 			sliderVih: nil
 		};
-
-		// returns [Closer slider, Furthor slider]
-		self.ClosestSlider = function(x) {
-			var vilX = self.sliderVil.X();
-			var vihX = self.sliderVih.X();
-
-			var dVil = Math.abs(x - vilX);
-			var dVih = Math.abs(x - vihX);
-			
-			if (dVil <= dVih) {
-				return [self.sliderVil, self.sliderVih];
-			} else {
-				return [self.sliderVih, self.sliderVil];
-			}
-		};
-
 		
 		self.init = function() {
 			// setup the path.
-			var x = 50;
-			var y = 630;
+			var x = left
+			var y = top
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+580, y+30);
+			var p2 = new paper.Point(x+(PLOT_RIGHT-PLOT_LEFT), y+30);
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#b3b3b3';
 			self.path.opacity = .3;
@@ -120,15 +112,12 @@ function StaticDiscipline() {
 				self.sliderVih.UnHighlight();
 				
 			});
-
 			self.path.on('mousedown', function(evt) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var pair = self.ClosestSlider(x);
 				pair[0].MoveTo(x-50);
 			});    
-
-			
 			self.path.on('mousedrag', function(evt) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
@@ -147,6 +136,23 @@ function StaticDiscipline() {
 				pair[1].UnHighlight();
 			});
 		};
+		
+		// returns [Closer slider, Furthor slider]
+		self.ClosestSlider = function(x) {
+			var vilX = self.sliderVil.X();
+			var vihX = self.sliderVih.X();
+
+			var dVil = Math.abs(x - vilX);
+			var dVih = Math.abs(x - vihX);
+			
+			if (dVil <= dVih) {
+				return [self.sliderVil, self.sliderVih];
+			} else {
+				return [self.sliderVih, self.sliderVil];
+			}
+		};
+
+		
 		self.init();
 		return self;
 	}
@@ -352,28 +358,28 @@ function StaticDiscipline() {
 	}
 
 	// -----------------------------------------------------------------------------
-	function RandomTransferFunction(paper, demo) {
+	function RandomTransferFunction(paper, plot) {
 		
 		var self = {
 			path: nil
 		};
 
-		self.Update = function(paper, demo) {
+		self.Update = function(paper, plot) {
 			// randomPoint on segment (0, voh) -> (0, LOGIC_LEVEL_HI)
 			var x1 = 50;
-			var y1 = randomRangeInt(50, demo.sliderVoh.Y());
+			var y1 = randomRangeInt(50, plot.sliderVoh.Y());
 			var p1 = new paper.Point(x1, y1);
 			// randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
-			var x2 = demo.sliderVil.X() + 5;
-			var y2 = randomRangeInt(50, demo.sliderVoh.Y());
+			var x2 = plot.sliderVil.X() + 5;
+			var y2 = randomRangeInt(50, plot.sliderVoh.Y());
 			var p2 = new paper.Point(x2, y2);
 			// randomPoint on segment (vih, 0) -> (vil, Vol)
-			var x3 = demo.sliderVih.X() - 5;
-			var y3 = randomRangeInt(demo.sliderVol.Y(), PLOT_BOTTOM);
+			var x3 = plot.sliderVih.X() - 5;
+			var y3 = randomRangeInt(plot.sliderVol.Y(), PLOT_BOTTOM);
 			var p3 = new paper.Point(x3, y3);
 			// randomPoint on segment (LOGIC_LEVEL_HI, 0) -> (LOGIC_LEVEL_HI, Vol)
 			var x4 = PLOT_RIGHT;
-			var y4 = randomRangeInt(demo.sliderVol.Y(), PLOT_BOTTOM);
+			var y4 = randomRangeInt(plot.sliderVol.Y(), PLOT_BOTTOM);
 			var p4 = new paper.Point(x4, y4);
 			
 			if (self.path != nil) {
@@ -383,8 +389,8 @@ function StaticDiscipline() {
 
 			// find a couple more points between vil and vih
 			// sort them by vi
-			var vil = demo.sliderVil.X() + 5;
-			var vih = demo.sliderVih.X() - 5;
+			var vil = plot.sliderVil.X() + 5;
+			var vih = plot.sliderVih.X() - 5;
 			var ps = [];
 			while(Math.random() > .5) {
 				var rx = randomRangeInt(vil, vih);
@@ -409,7 +415,7 @@ function StaticDiscipline() {
 	}
 
 	// -----------------------------------------------------------------------------
-	function Demo(paper, width, height) {
+	function Plot(paper, width, height) {
 		var self = {
 			width: width,
 			height: height,
@@ -450,8 +456,8 @@ function StaticDiscipline() {
 			self.sliderVol = SliderVol(paper);
 			self.sliderVol.MoveTo(100);
 			
-			self.scrollBarH = ScrollBarH(paper);
-			self.scrollBarV = ScrollBarV(paper);
+			self.scrollBarH = ScrollBarH(paper, 50, 630);
+			self.scrollBarV = ScrollBarV(paper, 20, 50);
 
 			// TODO. refactor. scrollbars should own sliders.
 			self.scrollBarV.sliderVol = self.sliderVol;
@@ -525,38 +531,36 @@ function StaticDiscipline() {
 		var canvas = document.getElementById('myCanvas');
 		// Create an empty project and a view for the canvas:
 		paper.setup(canvas);
-		var demo = Demo(paper, 700, 700);
+		//paper.
+		var plot = Plot(paper, 700, 1000);
 		//var glitz = Fun(paper);
 		
 		paper.view.onFrame = function(event) {
-			demo.UpdateForbidden();
-			demo.UpdateSliders();
-			//demo.UpdateTransfer();
+			plot.UpdateForbidden();
+			plot.UpdateSliders();
+			//plot.UpdateTransfer();
 			
 			//glitz.Step();
 			paper.view.draw();
-		};		
+		};
+
+		return plot;
 	}
 
-	init();
+	return init();
 }
-
-
-
-
-
 
 // Get a reference to the canvas object
     // var canvas = document.getElementById('myCanvas');
     // // Create an empty project and a view for the canvas:
     // paper.setup(canvas);
-    // var demo = Demo(paper, 700, 700);
+    // var plot = Plot(paper, 700, 700);
     // var glitz = Fun(paper);
     
     // paper.view.onFrame = function(event) {
-    //     demo.UpdateForbidden();
-    //     demo.UpdateSliders();
-    //     //demo.UpdateTransfer();
+    //     plot.UpdateForbidden();
+    //     plot.UpdateSliders();
+    //     //plot.UpdateTransfer();
         
     //     glitz.Step();
     //     paper.view.draw();
@@ -564,25 +568,40 @@ function StaticDiscipline() {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-    // //Get a reference to the canvas object
-    // var canvas = document.getElementById('myCanvas');
-    // // Create an empty project and a view for the canvas:
-    // paper.setup(canvas);
-    // var demo = Demo(paper, 700, 700);
-    // var glitz = Fun(paper);
-    
-    // paper.view.onFrame = function(event) {
-    //     demo.UpdateForbidden();
-    //     demo.UpdateSliders();
-    //     //demo.UpdateTransfer();
-        
-    //     glitz.Step();
-    //     paper.view.draw();
-    // };
-	StaticDiscipline();
+	var plot = TransferPlot(50, 50);
 };
 
 // -----------------------------------------------------------------------------
+// -------------------------------------------------------
+// helper functions 
+function randomRangeInt(a, b) {
+    var delta = b - a;
+    var r = Math.floor(Math.random() * delta);
+    return a + r;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// 
 function Fun(paper) {
     var self = {
         counter: 100,
@@ -658,10 +677,3 @@ function Fun(paper) {
     return self;
 }
 
-// -------------------------------------------------------
-// helper functions 
-function randomRangeInt(a, b) {
-    var delta = b - a;
-    var r = Math.floor(Math.random() * delta);
-    return a + r;
-}
