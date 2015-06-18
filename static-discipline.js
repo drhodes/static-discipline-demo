@@ -52,7 +52,7 @@ function ScrollBarV(paper) {
             var slider = self.ClosestSlider(y)[0];
 
             // don't drag a slider if the cursor is out of range.
-            if (y > 50 && y < 640) {
+            if (y > 50 && y < PLOT_BOTTOM-10) {
                 slider.MoveTo(640-y);
             }
         });    
@@ -82,7 +82,6 @@ function ScrollBarV(paper) {
 // -----------------------------------------------------------------------------
 function ScrollBarH(paper) {
     var self = {
-        state: "idle",
         path: nil,
         sliderVil: nil,
         sliderVih: nil
@@ -171,14 +170,16 @@ function SliderVih(paper) {
         x:0, y:0,
         path: nil,
         line: nil,
-        paper: paper
+        tag: nil
     };
 
     self.init = function() {
         self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
         self.path.fillColor = 'black';
-        self.path.rotate(180);
+        self.path.rotate(180);        
         sliderEvents(self);
+        self.tag = new paper.PointText();
+        
     };
 
     self.SetX = function(x) {
@@ -195,7 +196,7 @@ function SliderVih(paper) {
         self.UpdateLine(x,y);
     };
 
-    self.UpdateLine = function(x,y) {
+    self.UpdateLine = function(x, y) {
         if (self.line != nil) {
             self.line.remove();
         }
@@ -321,7 +322,8 @@ function SliderVol(paper) {
 
     self.SetY = function(y) {
         return self.y = 640 - y;
-    };  
+    };
+	
     self.Y = function() {
         return self.y;
     };
@@ -530,7 +532,7 @@ window.onload = function() {
     paper.view.onFrame = function(event) {
         demo.UpdateForbidden();
         demo.UpdateSliders();
-        demo.UpdateTransfer();
+        //demo.UpdateTransfer();
         
         glitz.Step();
         paper.view.draw();
@@ -615,7 +617,6 @@ function Fun(paper) {
 
 // -------------------------------------------------------
 // helper functions 
-
 function randomRangeInt(a, b) {
     var delta = b - a;
     var r = Math.floor(Math.random() * delta);
