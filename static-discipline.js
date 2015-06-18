@@ -1,26 +1,34 @@
+const nil = null;
 
 // Plot of the transfer function containing the user controls
-// 
 function TransferPlot(top, left) {	
 	const LOGIC_LEVEL_HI = 5;
 	const LOGIC_LEVEL_LO = 0;
-	var PLOT_TOP = top;
-	var PLOT_LEFT = left;
+	var PLOT_TOP = top; // 50
+	var PLOT_LEFT = left; // 50
 	var PLOT_WIDTH = 580;
 	var PLOT_HEIGHT = 580;
 	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
 	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
 	const SLIDER_THICK = 10;
 	const SLIDER_BREADTH = 20;
-	const nil = null;
+
 	
 	// -----------------------------------------------------------------------------
 	function ScrollBarV(paper, left, top) {
 		var self = {
 			path: nil,
 			sliderVol: nil,
-			sliderVoh: nil
+			sliderVoh: nil,
+			dirty: false
 		};
+
+		self.Adjusted = function() {
+			return self.dirty
+		}
+		self.MakeClean = function() {
+			self.dirty = false;
+		}
 
 		//returns [Closer slider, Furthor slider]
 		self.ClosestSlider = function(y) {
@@ -55,6 +63,9 @@ function TransferPlot(top, left) {
 				self.sliderVoh.UnHighlight();
 			});
 			self.path.on('mousedrag', function(evt) {
+				// mark dirty
+				self.dirty = true;
+				
 				// move the closest slider to this mouse position.
 				var y = evt.point.y;
 				var slider = self.ClosestSlider(y)[0];
@@ -78,6 +89,7 @@ function TransferPlot(top, left) {
 				var y = evt.point.y;
 				var pair = self.ClosestSlider(y);
 				pair[0].MoveTo(PLOT_BOTTOM+SLIDER_THICK-y);
+				self.dirty = true;
 			});    
 
 			
@@ -92,8 +104,17 @@ function TransferPlot(top, left) {
 		var self = {
 			path: nil,
 			sliderVil: nil,
-			sliderVih: nil
+			sliderVih: nil,
+			dirty: false,
 		};
+
+		self.Adjusted = function() {
+			return self.dirty;
+		}
+		self.MakeClean = function() {
+			self.dirty = false;
+		}
+
 		
 		self.init = function() {
 			// setup the path.
@@ -117,16 +138,23 @@ function TransferPlot(top, left) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var pair = self.ClosestSlider(x);
-				pair[0].MoveTo(x-50);
+				pair[0].MoveTo(x-50); // TODO
+				self.dirty = true;
+			});
+			self.path.on('mouseup', function(evt) {
 			});    
+
 			self.path.on('mousedrag', function(evt) {
+				// make dirty.
+				self.dirty = true;
+				
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var slider = self.ClosestSlider(x)[0];
-
+				
 				// don't drag a slider if the cursor is out of range.
-				if (x > 50 && x < 680) {
-					slider.MoveTo(x-50);
+				if (x > 50 && x < 680) { // TODO
+					slider.MoveTo(x-50); // TODO
 				}
 			});    
 			self.path.on('mousemove', function(evt) {
@@ -186,19 +214,18 @@ function TransferPlot(top, left) {
 			self.path.rotate(180);        
 			sliderEvents(self);
 			self.tag = new paper.PointText();
-			
 		};
 
-		self.SetX = function(x) {
-			return self.x = x + 55;
+		self.SetX = function(x) { 
+			return self.x = x + PLOT_LEFT + (SLIDER_THICK/2);
 		};  
 		self.X = function(x) {
 			return self.x;
 		};  
 		
-		self.MoveTo = function(x) {        
+		self.MoveTo = function(x) { 
 			self.SetX(x);
-			var y = 645;
+			var y = 645; // TODO
 			self.path.position = new paper.Point(self.x, y);
 			self.UpdateLine(x,y);
 		};
@@ -208,8 +235,8 @@ function TransferPlot(top, left) {
 				self.line.remove();
 			}
 			// draw the line
-			var from = new paper.Point(self.x-5, y-15);
-			var to = new paper.Point(self.x-5, y-595);
+			var from = new paper.Point(self.x-5, y-15); // TODO
+			var to = new paper.Point(self.x-5, y-595); // TODO
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'white';
 			self.line.dashArray = [2, 4];
@@ -235,27 +262,26 @@ function TransferPlot(top, left) {
 		};
 
 		self.SetX = function(x) {
-			return self.x = x + 45;
+			return self.x = x + 45; // TODO
 		};  
 		self.X = function(x) {
 			return self.x;
 		};  
 		
-		self.MoveTo = function(x) {        
+		self.MoveTo = function(x) { 
 			self.SetX(x);
-			var y = 645;
+			var y = 645; // TODO
 			self.path.position = new paper.Point(self.x, y);
 			self.DrawLine(y);
 		};
-
 
 		self.DrawLine = function(y) {
 			if (self.line != nil) {
 				self.line.remove();
 			}
 			// draw the line
-			var from = new paper.Point(self.x+5, y-15);
-			var to = new paper.Point(self.x+5, y-595);
+			var from = new paper.Point(self.x+5, y-15); // TODO
+			var to = new paper.Point(self.x+5, y-595); // TODO
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'white';
 			self.line.dashArray = [2, 4];
@@ -268,7 +294,7 @@ function TransferPlot(top, left) {
 	// -----------------------------------------------------------------------------
 	function SliderVoh(paper) {
 		var self = {        
-			x:35, y:0,
+			x:35, y:0,  // TODO
 			path: nil,
 			line: nil,
 			paper: paper
@@ -283,10 +309,10 @@ function TransferPlot(top, left) {
 
 
 		self.SetY = function(y) {
-			return self.y = 635 - y;
+			return self.y = 635 - y; // TODO
 		};  
 		self.Y = function() {
-			return self.y+5;
+			return self.y+5; // TODO
 		};
 		
 		self.MoveTo = function(y) {        
@@ -300,8 +326,8 @@ function TransferPlot(top, left) {
 			if (self.line != nil) {
 				self.line.remove();
 			}
-			var from = new paper.Point(self.x+15, self.y+5);
-			var to = new paper.Point(self.x+595, self.y+5);
+			var from = new paper.Point(self.x+15, self.y+5); // TODO
+			var to = new paper.Point(self.x+595, self.y+5); // TODO
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'lightgray';
 			self.line.dashArray = [2, 4];
@@ -314,7 +340,7 @@ function TransferPlot(top, left) {
 	// -----------------------------------------------------------------------------
 	function SliderVol(paper) {
 		var self = {        
-			x:35, y:0,
+			x:35, y:0, // TODO
 			path: nil,
 			line: nil,
 			paper: paper
@@ -367,15 +393,15 @@ function TransferPlot(top, left) {
 
 		self.Update = function(paper, plot) {
 			// randomPoint on segment (0, voh) -> (0, LOGIC_LEVEL_HI)
-			var x1 = 50;
-			var y1 = randomRangeInt(50, plot.sliderVoh.Y());
+			var x1 = 50;  // TODO
+			var y1 = randomRangeInt(50, plot.sliderVoh.Y()); // TODO
 			var p1 = new paper.Point(x1, y1);
 			// randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
-			var x2 = plot.sliderVil.X() + 5;
-			var y2 = randomRangeInt(50, plot.sliderVoh.Y());
+			var x2 = plot.sliderVil.X() + 5; // TODO
+			var y2 = randomRangeInt(50, plot.sliderVoh.Y()); // TODO
 			var p2 = new paper.Point(x2, y2);
 			// randomPoint on segment (vih, 0) -> (vil, Vol)
-			var x3 = plot.sliderVih.X() - 5;
+			var x3 = plot.sliderVih.X() - 5; // TODO
 			var y3 = randomRangeInt(plot.sliderVol.Y(), PLOT_BOTTOM);
 			var p3 = new paper.Point(x3, y3);
 			// randomPoint on segment (LOGIC_LEVEL_HI, 0) -> (LOGIC_LEVEL_HI, Vol)
@@ -390,8 +416,8 @@ function TransferPlot(top, left) {
 
 			// find a couple more points between vil and vih
 			// sort them by vi
-			var vil = plot.sliderVil.X() + 5;
-			var vih = plot.sliderVih.X() - 5;
+			var vil = plot.sliderVil.X() + 5; // TODO
+			var vih = plot.sliderVih.X() - 5; // TODO
 			var ps = [];
 			while(Math.random() > .5) {
 				var rx = randomRangeInt(vil, vih);
@@ -436,30 +462,32 @@ function TransferPlot(top, left) {
 		};
 		
 		self.initBackground = function() {
-			var x = 50;
-			var y = 50;
+			var x = 50; // TODO
+			var y = 50; // TODO
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+580, y+580);
+			var p2 = new paper.Point(x+580, y+580); // TODO
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#848494';
 		};
 
 		self.initSliders = function() {
 			self.sliderVil = SliderVil(paper);
-			self.sliderVil.MoveTo(100);
+			self.sliderVil.MoveTo(100); // TODO
 			
 			self.sliderVih = SliderVih(paper);
-			self.sliderVih.MoveTo(200);
+			self.sliderVih.MoveTo(200); // TODO
 			
 			self.sliderVoh = SliderVoh(paper);
-			self.sliderVoh.MoveTo(300);
+			self.sliderVoh.MoveTo(300); // TODO
 			
 			self.sliderVol = SliderVol(paper);
-			self.sliderVol.MoveTo(100);
+			self.sliderVol.MoveTo(100); // TODO
 			
-			self.scrollBarH = ScrollBarH(paper, 50, 630);
-			self.scrollBarV = ScrollBarV(paper, 20, 50);
+			self.scrollBarH = ScrollBarH(paper, 50, 630); // TODO
+			self.scrollBarV = ScrollBarV(paper, 20, 50); // TODO
 
+
+			
 			// TODO. refactor. scrollbars should own sliders.
 			self.scrollBarV.sliderVol = self.sliderVol;
 			self.scrollBarV.sliderVoh = self.sliderVoh;
@@ -477,11 +505,11 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y(); 
 			var bot = self.sliderVol.Y();
-			var left = 50;
+			var left = 50; // TODO
 			var right = self.sliderVil.X();
 			
-			var p1 = new paper.Point(50, top+1);
-			var p2 = new paper.Point(right+4, bot-6);
+			var p1 = new paper.Point(50, top+1); // TODO
+			var p2 = new paper.Point(right+4, bot-6); // TODO
 			self.forbiddenL = new paper.Path.Rectangle(p1, p2);
 			self.forbiddenL.fillColor = '#743d3d';
 		};
@@ -493,10 +521,10 @@ function TransferPlot(top, left) {
 			var top = self.sliderVoh.Y();
 			var bot = self.sliderVol.Y();
 			var left = self.sliderVih.X();
-			var right = 626;
+			var right = 626; // TODO
 			
-			var p1 = new paper.Point(left-4, top+1);
-			var p2 = new paper.Point(right+4, bot-6);
+			var p1 = new paper.Point(left-4, top+1); // TODO
+			var p2 = new paper.Point(right+4, bot-6); // TODO
 			self.forbiddenR = new paper.Path.Rectangle(p1, p2);
 			self.forbiddenR.fillColor = '#743d3d';
 		};
@@ -506,16 +534,23 @@ function TransferPlot(top, left) {
 			self.UpdateForbiddenR();
 		};
 
+		self.SlidersAdjusted = function() {
+			var adj = self.scrollBarH.Adjusted() || self.scrollBarV.Adjusted()
+			self.scrollBarV.MakeClean();
+			self.scrollBarH.MakeClean();
+			return adj
+		}
+		
 		self.UpdateSliders = function() {
 			// ok, so this is involved, but not complicated.  the static
 			// discipline enforces some invarients.
 			// vol < vil < vih < voh;
-
+			
 			// this means that when the user moves a slider, the
 			// invarients must be enforced every frame.  If vih is moving
 			// left and bumps into the vil slider, then the vil slider has
 			// to move down.  If the vil slider's voltage is less than
-			// vol's voltage, then that slider also has to decrease. 
+			// vol's voltage, then that slider also has to decrease.			
 		};
 
 		self.UpdateTransfer = function() {
@@ -539,8 +574,9 @@ function TransferPlot(top, left) {
 		paper.view.onFrame = function(event) {
 			plot.UpdateForbidden();
 			plot.UpdateSliders();
-			//plot.UpdateTransfer();
-			
+			if (plot.SlidersAdjusted()) {
+				plot.UpdateTransfer();
+			}			
 			//glitz.Step();
 			paper.view.draw();
 		};
