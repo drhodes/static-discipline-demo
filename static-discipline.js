@@ -138,7 +138,7 @@ function TransferPlot(top, left) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var pair = self.ClosestSlider(x);
-				pair[0].MoveTo(x-50); // TODO
+				pair[0].MoveTo(x-PLOT_LEFT); 
 				self.dirty = true;
 			});
 			self.path.on('mouseup', function(evt) {
@@ -152,9 +152,9 @@ function TransferPlot(top, left) {
 				var x = evt.point.x;
 				var slider = self.ClosestSlider(x)[0];
 				
-				// don't drag a slider if the cursor is out of range.
-				if (x > 50 && x < 680) { // TODO
-					slider.MoveTo(x-50); // TODO
+				// drag a slider only if cursor is in range.
+				if (x > PLOT_LEFT && x < PLOT_RIGHT) { // TODO
+					slider.MoveTo(x - PLOT_LEFT); // TODO
 				}
 			});    
 			self.path.on('mousemove', function(evt) {
@@ -393,8 +393,8 @@ function TransferPlot(top, left) {
 
 		self.Update = function(paper, plot) {
 			// randomPoint on segment (0, voh) -> (0, LOGIC_LEVEL_HI)
-			var x1 = 50;  // TODO
-			var y1 = randomRangeInt(50, plot.sliderVoh.Y()); // TODO
+			var x1 = PLOT_LEFT;  // TODO
+			var y1 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y()); // TODO
 			var p1 = new paper.Point(x1, y1);
 			// randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
 			var x2 = plot.sliderVil.X() + 5; // TODO
