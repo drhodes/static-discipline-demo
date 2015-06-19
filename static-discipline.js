@@ -3,7 +3,7 @@
 const nil = null;
 
 // Plot of the transfer function containing the user controls
-function TransferPlot(top, left) {	
+function TransferPlot(top, left) {
 	const LOGIC_LEVEL_HI = 5;
 	const LOGIC_LEVEL_LO = 0;
 	var PLOT_TOP = top; // 50
@@ -16,7 +16,7 @@ function TransferPlot(top, left) {
 	// slider thickness and breadth is hard coded in the svg string.
 	const SLIDER_THICK = 10;
 	const SLIDER_BREADTH = 30;
-
+	
 	// -----------------------------------------------------------------------------
 	function InheritAdjuster(self) {
 		self._dirty = false;
@@ -47,6 +47,22 @@ function TransferPlot(top, left) {
 			self.line.strokeColor = 'lightgray';
 		};
 	};
+
+	// -----------------------------------------------------------------------------
+	function InheritSliderLabel(self, txt) {
+		//self.label = new paper.
+		self.text = new paper.PointText(new paper.Point(50, 50));
+		self.text.fillColor = 'black';
+		self.text.content = txt
+		self.text.fontFamily = "courier";
+		self.text.fontSize = 16;
+
+		self.SetTextX = function(x) { self.text.position.x = x }
+		self.SetTextY = function(y) { self.text.position.y = y }
+		self.SetTextLoc = function(x, y) {
+			self.SetTextX(x); self.SetTextY(y);
+		}
+	}
 	
 	// -----------------------------------------------------------------------------
 	function ScrollBarV(paper, left, top) {
@@ -135,7 +151,7 @@ function TransferPlot(top, left) {
 
 		return self.init();
 	}
-
+	
 	// -----------------------------------------------------------------------------
 	function ScrollBarH(paper, left, top) {
 		var self = {
@@ -224,7 +240,8 @@ function TransferPlot(top, left) {
 			tag: nil
 		};
 		InheritSliderStyle(self);
-
+		InheritSliderLabel(self, "Vih");
+		
 		self.init = function() {
 			self.path.rotate(180);        
 			self.tag = new paper.PointText();
@@ -242,8 +259,13 @@ function TransferPlot(top, left) {
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
 			self.path.position = new paper.Point(self.x, y);
 			self.UpdateLine(x,y);
+			self.SetTextLoc(x+PLOT_LEFT+SLIDER_THICK*3, y)
 		};
 
+		self.Volts = function() {
+			return LOGIC_LEVEL_HI * (self.X() / (PLOT_RIGHT - PLOT_LEFT))
+		}
+		
 		self.UpdateLine = function(x, y) {
 			if (self.line != nil) {
 				self.line.remove();
@@ -272,6 +294,7 @@ function TransferPlot(top, left) {
 			paper: paper
 		};
 		InheritSliderStyle(self);
+		InheritSliderLabel(self, "Vil");
 
 		self.init = function() {
 			// self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
@@ -283,13 +306,18 @@ function TransferPlot(top, left) {
 		};  
 		self.X = function(x) {
 			return self.x;
-		};  
+		};
 		
+		self.Volts = function() {
+			return LOGIC_LEVEL_HI * (self.X() / (PLOT_RIGHT - PLOT_LEFT))
+		}
+
 		self.MoveTo = function(x) { 
 			self.SetX(x);
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
 			self.path.position = new paper.Point(self.x, y);
 			self.DrawLine(y);
+			self.SetTextLoc(x + PLOT_LEFT - SLIDER_THICK * 3, y)
 		};
 
 		self.DrawLine = function(y) {
@@ -321,13 +349,15 @@ function TransferPlot(top, left) {
 			paper: paper
 		};
 		InheritSliderStyle(self);
-
+		InheritSliderLabel(self, "Voh")
+		
 		self.init = function() {
-			self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-			self.path.fillColor = 'black';
 			self.path.rotate(90);
 		};
-
+		
+		self.Volts = function() {
+			return LOGIC_LEVEL_HI * (self.Y() / (PLOT_BOTTOM - PLOT_TOP))
+		}
 
 		self.SetY = function(y) {
 			return self.y = PLOT_BOTTOM - y;
@@ -341,6 +371,8 @@ function TransferPlot(top, left) {
 			self.path.position = new paper.Point(self.x, self.y);
 			// draw the line
 			self.UpdateLine(y);
+			var nudge = 5;
+			self.SetTextLoc(self.x - SLIDER_BREADTH - nudge, self.Y() - nudge)
 		};
 
 		self.UpdateLine = function(y) {
@@ -368,7 +400,8 @@ function TransferPlot(top, left) {
 			paper: paper
 		};
 		InheritSliderStyle(self);
-
+		InheritSliderLabel(self, "Vol")
+		
 		self.init = function() {
 			self.path.rotate(-90);
 		};
@@ -381,12 +414,19 @@ function TransferPlot(top, left) {
 			return self.y - SLIDER_THICK / 2;
 		};
 		
+		self.Volts = function() {
+			return LOGIC_LEVEL_HI * (self.Y() / (PLOT_BOTTOM - PLOT_TOP))
+		}
+		
 		self.MoveTo = function(y) {
 			y -= SLIDER_THICK / 2;
 			self.SetY(y);
 			self.path.position = new paper.Point(self.x, self.y);
 			// draw the line
 			self.UpdateLine(y);
+			var nudge = 5;
+			self.SetTextLoc(self.x - SLIDER_BREADTH - nudge, self.Y() + nudge)
+
 		};
 
 		self.UpdateLine = function(y) {
@@ -482,6 +522,8 @@ function TransferPlot(top, left) {
 			tranferFunc: nil,
 			end:nil
 		};
+		InheritAdjuster(self);
+
 		
 		self.initBackground = function() {
 			var x = PLOT_LEFT;
@@ -513,6 +555,12 @@ function TransferPlot(top, left) {
 			self.scrollBarH.sliderVih = self.sliderVih;
 		};
 
+		self.Vol = function() { return self.sliderVol.Volts(); }
+		self.Voh = function() { return self.sliderVoh.Volts(); }
+		self.Vil = function() { return self.sliderVil.Volts(); }
+		self.Vih = function() { return self.sliderVih.Volts(); }
+		
+		
 		self.initTranferFunc = function() {
 			self.transferFunc = RandomTransferFunction();
 		};
@@ -578,7 +626,7 @@ function TransferPlot(top, left) {
 		self.initTranferFunc();
 		return self;
 	}
-
+	
 	// -----------------------------------------------------------------------------
 	function init() {
 		var canvas = document.getElementById('myCanvas');
@@ -606,9 +654,7 @@ function TransferPlot(top, left) {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-	var plot = TransferPlot(400, 50);
-	
-	
+	var plot = TransferPlot(400, 100);
 };
 
 
