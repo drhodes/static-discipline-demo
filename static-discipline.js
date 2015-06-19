@@ -8,8 +8,8 @@ function TransferPlot(top, left) {
 	const LOGIC_LEVEL_LO = 0;
 	var PLOT_TOP = top; // 50
 	var PLOT_LEFT = left; // 50
-	var PLOT_WIDTH = 580;
-	var PLOT_HEIGHT = 580;
+	var PLOT_WIDTH = 400;
+	var PLOT_HEIGHT = 400;
 	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
 	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
 	
@@ -288,7 +288,6 @@ function TransferPlot(top, left) {
 		self.MoveTo = function(x) { 
 			self.SetX(x);
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
-			//var y = 645; 
 			self.path.position = new paper.Point(self.x, y);
 			self.DrawLine(y);
 		};
@@ -331,10 +330,10 @@ function TransferPlot(top, left) {
 
 
 		self.SetY = function(y) {
-			return self.y = 635 - y; // TODO
+			return self.y = PLOT_BOTTOM - y;
 		};  
 		self.Y = function() {
-			return self.y+5; // TODO
+			return self.y + SLIDER_THICK / 2; 
 		};
 		
 		self.MoveTo = function(y) {        
@@ -348,8 +347,8 @@ function TransferPlot(top, left) {
 			if (self.line != nil) {
 				self.line.remove();
 			}
-			var from = new paper.Point(self.x+15, self.y+5); // TODO
-			var to = new paper.Point(self.x+595, self.y+5); // TODO
+			var from = new paper.Point(PLOT_LEFT, self.Y());
+			var to = new paper.Point(PLOT_RIGHT, self.Y());
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'lightgray';
 			self.line.dashArray = [2, 4];
@@ -362,7 +361,8 @@ function TransferPlot(top, left) {
 	// -----------------------------------------------------------------------------
 	function SliderVol(paper) {
 		var self = {        
-			x:35, y:0, // TODO
+			x: PLOT_LEFT - SLIDER_BREADTH/2,
+			y: 0,
 			path: nil,
 			line: nil,
 			paper: paper
@@ -374,15 +374,15 @@ function TransferPlot(top, left) {
 		};
 
 		self.SetY = function(y) {
-			return self.y = 640 - y;
+			return self.y = PLOT_BOTTOM + SLIDER_THICK - y;
 		};
 		
 		self.Y = function() {
-			return self.y;
+			return self.y - SLIDER_THICK / 2;
 		};
 		
 		self.MoveTo = function(y) {
-			y-=5; // TODO
+			y -= SLIDER_THICK / 2;
 			self.SetY(y);
 			self.path.position = new paper.Point(self.x, self.y);
 			// draw the line
@@ -393,8 +393,8 @@ function TransferPlot(top, left) {
 			if (self.line != nil) {
 				self.line.remove();
 			}
-			var from = new paper.Point(self.x+15, self.y-5);
-			var to = new paper.Point(self.x+595, self.y-5);
+			var from = new paper.Point(PLOT_LEFT, self.Y());
+			var to = new paper.Point(PLOT_RIGHT, self.Y());
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'lightgray';
 			self.line.dashArray = [2, 4];
@@ -506,7 +506,7 @@ function TransferPlot(top, left) {
 			self.scrollBarH = ScrollBarH(paper, PLOT_LEFT, PLOT_BOTTOM);
 			self.scrollBarV = ScrollBarV(paper, PLOT_LEFT - SLIDER_BREADTH, PLOT_TOP); 
 			
-			// TODO. refactor. scrollbars should own sliders.
+			// refactor. scrollbars should own sliders.
 			self.scrollBarV.sliderVol = self.sliderVol;
 			self.scrollBarV.sliderVoh = self.sliderVoh;
 			self.scrollBarH.sliderVil = self.sliderVil;
@@ -523,11 +523,10 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y(); 
 			var bot = self.sliderVol.Y();
-			var left = 50; // TODO
-			var right = self.sliderVil.X();
+			var right = self.sliderVil.X() + SLIDER_THICK / 2 - 1 
 			
-			var p1 = new paper.Point(50, top+1); // TODO
-			var p2 = new paper.Point(right+4, bot-6); // TODO
+			var p1 = new paper.Point(PLOT_LEFT, top+1); 
+			var p2 = new paper.Point(right, bot-1);
 			self.forbiddenL = new paper.Path.Rectangle(p1, p2);
 			self.forbiddenL.fillColor = '#743d3d';
 		};
@@ -538,11 +537,11 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y();
 			var bot = self.sliderVol.Y();
-			var left = self.sliderVih.X();
-			var right = 626; // TODO
+			var left = self.sliderVih.X() - SLIDER_THICK / 2 + 1
+			var right = PLOT_RIGHT; 
 			
-			var p1 = new paper.Point(left-4, top+1); // TODO
-			var p2 = new paper.Point(right+4, bot-6); // TODO
+			var p1 = new paper.Point(left, top+1);
+			var p2 = new paper.Point(right, bot-1);
 			self.forbiddenR = new paper.Path.Rectangle(p1, p2);
 			self.forbiddenR.fillColor = '#743d3d';
 		};
@@ -607,7 +606,7 @@ function TransferPlot(top, left) {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-	var plot = TransferPlot(50, 50);
+	var plot = TransferPlot(400, 50);
 	
 	
 };
