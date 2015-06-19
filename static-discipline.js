@@ -16,6 +16,8 @@ function TransferPlot(top, left) {
 	// slider thickness and breadth is hard coded in the svg string.
 	const SLIDER_THICK = 10;
 	const SLIDER_BREADTH = 30;
+	const ACTIVE_SLIDER_COLOR = "blue"
+
 	
 	// -----------------------------------------------------------------------------
 	function InheritAdjuster(self) {
@@ -36,16 +38,25 @@ function TransferPlot(top, left) {
 	function InheritSliderStyle(self) {
 		self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
 		self.path.fillColor = 'black';
+		self._highlighted = false;
+
 		
 		self.Highlight = function() {
-			self.path.fillColor = 'blue';
+			self.path.fillColor = ACTIVE_SLIDER_COLOR;
 			self.line.strokeColor = 'blue';
+			self._highlighted = true;
 		};
 
 		self.UnHighlight = function() {
 			self.path.fillColor = 'black';
 			self.line.strokeColor = 'lightgray';
+			self._highlighted = false;
 		};
+
+		self.IsHighlighted = function() {
+			return self._highlighted
+		}
+		
 	};
 
 	// -----------------------------------------------------------------------------
@@ -230,6 +241,16 @@ function TransferPlot(top, left) {
 		return self;
 	}
 
+	function Clip(v) {
+		if (v < LOGIC_LEVEL_LO) {
+			return LOGIC_LEVEL_LO
+		}
+		if (v > LOGIC_LEVEL_HI) {
+			return LOGIC_LEVEL_HI
+		}
+		return v
+	}
+	
 	// -----------------------------------------------------------------------------
 	function SliderVih(paper) {
 		// has a handle and a dotted line
@@ -263,7 +284,7 @@ function TransferPlot(top, left) {
 		};
 
 		self.Volts = function() {
-			return LOGIC_LEVEL_HI * (self.X() / (PLOT_RIGHT - PLOT_LEFT))
+			return Clip(LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH))
 		}
 		
 		self.UpdateLine = function(x, y) {
@@ -297,8 +318,6 @@ function TransferPlot(top, left) {
 		InheritSliderLabel(self, "Vil");
 
 		self.init = function() {
-			// self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-			// self.path.fillColor = 'black';
 		};
 
 		self.SetX = function(x) {
@@ -309,7 +328,7 @@ function TransferPlot(top, left) {
 		};
 		
 		self.Volts = function() {
-			return LOGIC_LEVEL_HI * (self.X() / (PLOT_RIGHT - PLOT_LEFT))
+			return Clip(LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH))
 		}
 
 		self.MoveTo = function(x) { 
@@ -365,6 +384,17 @@ function TransferPlot(top, left) {
 		self.Y = function() {
 			return self.y + SLIDER_THICK / 2; 
 		};
+
+		self.Volts = function() {
+			return Clip(LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT))
+		}
+
+		self.SetV = function(v) {
+			v = Clip(v)
+			var ratio = v / LOGIC_LEVEL_HI;
+			var px = ratio * PLOT_HEIGHT;
+			self.MoveTo(px);
+		}
 		
 		self.MoveTo = function(y) {        
 			self.SetY(y);
@@ -415,9 +445,16 @@ function TransferPlot(top, left) {
 		};
 		
 		self.Volts = function() {
-			return LOGIC_LEVEL_HI * (self.Y() / (PLOT_BOTTOM - PLOT_TOP))
+			return Clip(LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT))
 		}
 		
+		self.SetV = function(v) {
+			v = Clip(v)
+			var ratio = v / LOGIC_LEVEL_HI;
+			var px = ratio * PLOT_HEIGHT;
+			self.MoveTo(SLIDER_THICK + px );
+		}
+
 		self.MoveTo = function(y) {
 			y -= SLIDER_THICK / 2;
 			self.SetY(y);
@@ -426,7 +463,6 @@ function TransferPlot(top, left) {
 			self.UpdateLine(y);
 			var nudge = 5;
 			self.SetTextLoc(self.x - SLIDER_BREADTH - nudge, self.Y() + nudge)
-
 		};
 
 		self.UpdateLine = function(y) {
@@ -520,11 +556,10 @@ function TransferPlot(top, left) {
 			forbiddenL: nil,
 			forbiddenR: nil,
 			tranferFunc: nil,
+			lastActive: nil, // The last active slider.
 			end:nil
 		};
 		InheritAdjuster(self);
-
-		
 		self.initBackground = function() {
 			var x = PLOT_LEFT;
 			var y = PLOT_TOP;
@@ -533,7 +568,6 @@ function TransferPlot(top, left) {
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#848494';
 		};
-
 		self.initSliders = function() {
 			self.sliderVil = SliderVil(paper);
 			self.sliderVih = SliderVih(paper);
@@ -554,13 +588,10 @@ function TransferPlot(top, left) {
 			self.scrollBarH.sliderVil = self.sliderVil;
 			self.scrollBarH.sliderVih = self.sliderVih;
 		};
-
 		self.Vol = function() { return self.sliderVol.Volts(); }
 		self.Voh = function() { return self.sliderVoh.Volts(); }
 		self.Vil = function() { return self.sliderVil.Volts(); }
 		self.Vih = function() { return self.sliderVih.Volts(); }
-		
-		
 		self.initTranferFunc = function() {
 			self.transferFunc = RandomTransferFunction();
 		};
@@ -605,17 +636,47 @@ function TransferPlot(top, left) {
 			self.scrollBarH.MakeClean();
 			return adj;
 		}
+
+		self.UpdateLastActiveSlider = function() {
+			if (self.sliderVil.IsHighlighted()) {
+				self.lastActiveSlider = "Vil";
+			}
+			if (self.sliderVol.IsHighlighted()) {
+				self.lastActiveSlider = "Vol";
+			}
+			if (self.sliderVih.IsHighlighted()) {
+				self.lastActiveSlider = "Vih";
+			}
+			if (self.sliderVoh.IsHighlighted()) {
+				self.lastActiveSlider = "Voh";
+			}
+		}
 		
 		self.UpdateSliders = function() {
+			self.UpdateLastActiveSlider()
 			// ok, so this is involved, but not complicated.  the static
 			// discipline enforces some invarients.
 			// vol < vil < vih < voh;
+			//console.log([self.Vol(), self.Voh()])
+			if (self.lastActiveSlider == "Vil") {
+				if (self.Vil() > self.Vol()) {
+					self.sliderVol.SetV(self.Vil());
+				}
+				if (self.Vol() > self.Voh()) {
+					self.sliderVoh.SetV(self.Vol()+.1);
+				}
+
+			}
+
 			
 			// this means that when the user moves a slider, the
 			// invarients must be enforced every frame.  If vih is moving
 			// left and bumps into the vil slider, then the vil slider has
 			// to move down.  If the vil slider's voltage is less than
-			// vol's voltage, then that slider also has to decrease.			
+			// vol's voltage, then that slider also has to decrease.
+			
+
+			
 		};
 
 		self.UpdateTransfer = function() {
@@ -641,7 +702,7 @@ function TransferPlot(top, left) {
 			plot.UpdateSliders();
 			if (plot.SlidersAdjusted()) {
 				plot.UpdateTransfer();
-			}			
+			}
 			//glitz.Step();
 			paper.view.draw();
 		};
