@@ -1,3 +1,5 @@
+
+// nil is clearly superior to null.
 const nil = null;
 
 // Plot of the transfer function containing the user controls
@@ -10,9 +12,41 @@ function TransferPlot(top, left) {
 	var PLOT_HEIGHT = 580;
 	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
 	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
+	
+	// slider thickness and breadth is hard coded in the svg string.
 	const SLIDER_THICK = 10;
-	const SLIDER_BREADTH = 20;
+	const SLIDER_BREADTH = 30;
 
+	// -----------------------------------------------------------------------------
+	function InheritAdjuster(self) {
+		self._dirty = false;
+		
+		self.Adjusted = function() {
+			return self._dirty;
+		};
+		self.MakeClean = function() {
+			self._dirty = false;
+		};
+		self.MakeDirty = function() {
+			self._dirty = true;
+		};
+	}
+
+	// -----------------------------------------------------------------------------
+	function InheritSliderStyle(self) {
+		self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
+		self.path.fillColor = 'black';
+		
+		self.Highlight = function() {
+			self.path.fillColor = 'blue';
+			self.line.strokeColor = 'blue';
+		};
+
+		self.UnHighlight = function() {
+			self.path.fillColor = 'black';
+			self.line.strokeColor = 'lightgray';
+		};
+	};
 	
 	// -----------------------------------------------------------------------------
 	function ScrollBarV(paper, left, top) {
@@ -20,16 +54,9 @@ function TransferPlot(top, left) {
 			path: nil,
 			sliderVol: nil,
 			sliderVoh: nil,
-			dirty: false
 		};
-
-		self.Adjusted = function() {
-			return self.dirty
-		}
-		self.MakeClean = function() {
-			self.dirty = false;
-		}
-
+		InheritAdjuster(self);
+		
 		//returns [Closer slider, Furthor slider]
 		self.ClosestSlider = function(y) {
 			var volY = self.sliderVol.Y();
@@ -49,22 +76,27 @@ function TransferPlot(top, left) {
 			var x = left;
 			var y = top;
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x + PLOT_LEFT - SLIDER_BREADTH,
+			var p2 = new paper.Point(x + SLIDER_BREADTH,
 									 y + PLOT_BOTTOM - PLOT_TOP);
 			
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#b3b3b3';
 			self.path.opacity = .3;
-			
+
+			self.BackgroundOpacity = function(n) {
+				self.path.opacity = n;				
+			};
 			// setup the event callbacks.
 			self.path.on('mouseleave', function() {
 				// deselect bots sliders.
 				self.sliderVol.UnHighlight();
 				self.sliderVoh.UnHighlight();
+				self.BackgroundOpacity(.3)
 			});
+			
 			self.path.on('mousedrag', function(evt) {
 				// mark dirty
-				self.dirty = true;
+				self.MakeDirty()
 				
 				// move the closest slider to this mouse position.
 				var y = evt.point.y;
@@ -74,9 +106,15 @@ function TransferPlot(top, left) {
 				if (y > left && y < PLOT_BOTTOM - SLIDER_THICK) {
 					slider.MoveTo(PLOT_BOTTOM + SLIDER_THICK - y);
 				}
-			});    
+			});
+			
 			self.path.on('mouseup', function(evt) {
-			});    
+			});
+
+			self.path.on('mouseenter', function(evt) {
+				self.BackgroundOpacity(.2);
+			});
+			
 			self.path.on('mousemove', function(evt) {
 				// Highlight the closest slider.
 				var y = evt.point.y;
@@ -84,19 +122,18 @@ function TransferPlot(top, left) {
 				pair[0].Highlight();
 				pair[1].UnHighlight();
 			});
+			
 			self.path.on('mousedown', function(evt) {
 				// move the closest slider to this mouse position.
 				var y = evt.point.y;
 				var pair = self.ClosestSlider(y);
 				pair[0].MoveTo(PLOT_BOTTOM+SLIDER_THICK-y);
-				self.dirty = true;
+				self.MakeDirty();
 			});    
-
-			
+			return self;
 		};
 
-		self.init();
-		return self;
+		return self.init();
 	}
 
 	// -----------------------------------------------------------------------------
@@ -105,24 +142,16 @@ function TransferPlot(top, left) {
 			path: nil,
 			sliderVil: nil,
 			sliderVih: nil,
-			dirty: false,
 		};
-
-		self.Adjusted = function() {
-			return self.dirty;
-		}
-		self.MakeClean = function() {
-			self.dirty = false;
-		}
-
+		InheritAdjuster(self)
 		
 		self.init = function() {
 			// setup the path.
-			var x = left
-			var y = top
+			var x = left;
+			var y = top;
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+(PLOT_RIGHT - PLOT_LEFT),
-									 y+(PLOT_LEFT - SLIDER_BREADTH)); // 30
+			var p2 = new paper.Point(x + PLOT_RIGHT - PLOT_LEFT,
+									 y + SLIDER_BREADTH); 
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#b3b3b3';
 			self.path.opacity = .3;
@@ -132,29 +161,28 @@ function TransferPlot(top, left) {
 				// deselect bots sliders.
 				self.sliderVil.UnHighlight();
 				self.sliderVih.UnHighlight();
-				
 			});
 			self.path.on('mousedown', function(evt) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var pair = self.ClosestSlider(x);
 				pair[0].MoveTo(x-PLOT_LEFT); 
-				self.dirty = true;
+				self.MakeDirty();
 			});
 			self.path.on('mouseup', function(evt) {
 			});    
 
 			self.path.on('mousedrag', function(evt) {
 				// make dirty.
-				self.dirty = true;
+				self.MakeDirty();
 				
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var slider = self.ClosestSlider(x)[0];
 				
 				// drag a slider only if cursor is in range.
-				if (x > PLOT_LEFT && x < PLOT_RIGHT) { // TODO
-					slider.MoveTo(x - PLOT_LEFT); // TODO
+				if (x > PLOT_LEFT && x < PLOT_RIGHT) {
+					slider.MoveTo(x - PLOT_LEFT);
 				}
 			});    
 			self.path.on('mousemove', function(evt) {
@@ -187,32 +215,18 @@ function TransferPlot(top, left) {
 	}
 
 	// -----------------------------------------------------------------------------
-	function sliderEvents(self) {
-		self.Highlight = function() {
-			self.path.fillColor = 'blue';
-			self.line.strokeColor = 'blue';
-		};
-
-		self.UnHighlight = function() {
-			self.path.fillColor = 'black';
-			self.line.strokeColor = 'lightgray';
-		};
-	};
-
-	// -----------------------------------------------------------------------------
 	function SliderVih(paper) {
+		// has a handle and a dotted line
 		var self = {        
 			x:0, y:0,
 			path: nil,
 			line: nil,
 			tag: nil
 		};
+		InheritSliderStyle(self);
 
 		self.init = function() {
-			self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-			self.path.fillColor = 'black';
 			self.path.rotate(180);        
-			sliderEvents(self);
 			self.tag = new paper.PointText();
 		};
 
@@ -225,7 +239,7 @@ function TransferPlot(top, left) {
 		
 		self.MoveTo = function(x) { 
 			self.SetX(x);
-			var y = 645; // TODO
+			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
 			self.path.position = new paper.Point(self.x, y);
 			self.UpdateLine(x,y);
 		};
@@ -235,8 +249,11 @@ function TransferPlot(top, left) {
 				self.line.remove();
 			}
 			// draw the line
-			var from = new paper.Point(self.x-5, y-15); // TODO
-			var to = new paper.Point(self.x-5, y-595); // TODO
+			// measure from the slider loc, the middle of the left side.
+			var x1 = self.x - SLIDER_THICK / 2;
+			
+			var from = new paper.Point(x1, PLOT_BOTTOM);
+			var to = new paper.Point(x1, PLOT_TOP); 
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'white';
 			self.line.dashArray = [2, 4];
@@ -254,15 +271,15 @@ function TransferPlot(top, left) {
 			line: nil,
 			paper: paper
 		};
+		InheritSliderStyle(self);
 
 		self.init = function() {
-			self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-			self.path.fillColor = 'black';
-			sliderEvents(self);
+			// self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
+			// self.path.fillColor = 'black';
 		};
 
 		self.SetX = function(x) {
-			return self.x = x + 45; // TODO
+			return self.x = x + PLOT_LEFT - SLIDER_THICK/2;
 		};  
 		self.X = function(x) {
 			return self.x;
@@ -270,7 +287,8 @@ function TransferPlot(top, left) {
 		
 		self.MoveTo = function(x) { 
 			self.SetX(x);
-			var y = 645; // TODO
+			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
+			//var y = 645; 
 			self.path.position = new paper.Point(self.x, y);
 			self.DrawLine(y);
 		};
@@ -280,8 +298,11 @@ function TransferPlot(top, left) {
 				self.line.remove();
 			}
 			// draw the line
-			var from = new paper.Point(self.x+5, y-15); // TODO
-			var to = new paper.Point(self.x+5, y-595); // TODO
+			var x1 = self.x + SLIDER_THICK / 2;
+			
+			var from = new paper.Point(x1, PLOT_BOTTOM);
+			var to = new paper.Point(x1, PLOT_TOP);
+			
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'white';
 			self.line.dashArray = [2, 4];
@@ -294,17 +315,18 @@ function TransferPlot(top, left) {
 	// -----------------------------------------------------------------------------
 	function SliderVoh(paper) {
 		var self = {        
-			x:35, y:0,  // TODO
+			x: PLOT_LEFT - SLIDER_BREADTH / 2,
+			y: 0,  
 			path: nil,
 			line: nil,
 			paper: paper
 		};
+		InheritSliderStyle(self);
 
 		self.init = function() {
 			self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
 			self.path.fillColor = 'black';
 			self.path.rotate(90);
-			sliderEvents(self);
 		};
 
 
@@ -345,12 +367,10 @@ function TransferPlot(top, left) {
 			line: nil,
 			paper: paper
 		};
+		InheritSliderStyle(self);
 
 		self.init = function() {
-			self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-			self.path.fillColor = 'black';
 			self.path.rotate(-90);
-			sliderEvents(self);
 		};
 
 		self.SetY = function(y) {
@@ -362,7 +382,7 @@ function TransferPlot(top, left) {
 		};
 		
 		self.MoveTo = function(y) {
-			y-=5;
+			y-=5; // TODO
 			self.SetY(y);
 			self.path.position = new paper.Point(self.x, self.y);
 			// draw the line
@@ -386,22 +406,23 @@ function TransferPlot(top, left) {
 
 	// -----------------------------------------------------------------------------
 	function RandomTransferFunction(paper, plot) {
-		
 		var self = {
 			path: nil
 		};
 
 		self.Update = function(paper, plot) {
+			const smidgen = 5;
+			
 			// randomPoint on segment (0, voh) -> (0, LOGIC_LEVEL_HI)
-			var x1 = PLOT_LEFT;  // TODO
-			var y1 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y()); // TODO
+			var x1 = PLOT_LEFT;  
+			var y1 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y()); 
 			var p1 = new paper.Point(x1, y1);
 			// randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
-			var x2 = plot.sliderVil.X() + 5; // TODO
-			var y2 = randomRangeInt(50, plot.sliderVoh.Y()); // TODO
+			var x2 = plot.sliderVil.X() + smidgen;
+			var y2 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y());
 			var p2 = new paper.Point(x2, y2);
 			// randomPoint on segment (vih, 0) -> (vil, Vol)
-			var x3 = plot.sliderVih.X() - 5; // TODO
+			var x3 = plot.sliderVih.X() - smidgen;
 			var y3 = randomRangeInt(plot.sliderVol.Y(), PLOT_BOTTOM);
 			var p3 = new paper.Point(x3, y3);
 			// randomPoint on segment (LOGIC_LEVEL_HI, 0) -> (LOGIC_LEVEL_HI, Vol)
@@ -416,18 +437,19 @@ function TransferPlot(top, left) {
 
 			// find a couple more points between vil and vih
 			// sort them by vi
-			var vil = plot.sliderVil.X() + 5; // TODO
-			var vih = plot.sliderVih.X() - 5; // TODO
+			var vil = plot.sliderVil.X() + smidgen; 
+			var vih = plot.sliderVih.X() - smidgen; 
 			var ps = [];
-			while(Math.random() > .5) {
+
+			// generate some points
+			while(coinFlipIsHeads()) {
 				var rx = randomRangeInt(vil, vih);
 				var ry = randomRangeInt(PLOT_TOP, PLOT_BOTTOM);
 				ps.push(new paper.Point(rx, ry));
 			}
 			ps.sort(function(a, b) {
 				return a.x - b.x;
-			});
-			
+			});			
 			for (var i in ps) {
 				self.path.lineTo(ps[i]);
 			}
@@ -462,31 +484,27 @@ function TransferPlot(top, left) {
 		};
 		
 		self.initBackground = function() {
-			var x = 50; // TODO
-			var y = 50; // TODO
+			var x = PLOT_LEFT;
+			var y = PLOT_TOP;
 			var p1 = new paper.Point(x, y);
-			var p2 = new paper.Point(x+580, y+580); // TODO
+			var p2 = new paper.Point(x+PLOT_WIDTH, y+PLOT_HEIGHT);
 			self.path = new paper.Path.Rectangle(p1, p2);
 			self.path.fillColor = '#848494';
 		};
 
 		self.initSliders = function() {
 			self.sliderVil = SliderVil(paper);
-			self.sliderVil.MoveTo(100); // TODO
-			
 			self.sliderVih = SliderVih(paper);
-			self.sliderVih.MoveTo(200); // TODO
-			
 			self.sliderVoh = SliderVoh(paper);
-			self.sliderVoh.MoveTo(300); // TODO
-			
 			self.sliderVol = SliderVol(paper);
-			self.sliderVol.MoveTo(100); // TODO
+			// set the values to something
+			self.sliderVil.MoveTo(100);
+			self.sliderVih.MoveTo(200);
+			self.sliderVoh.MoveTo(300);
+			self.sliderVol.MoveTo(100);
 			
-			self.scrollBarH = ScrollBarH(paper, 50, 630); // TODO
-			self.scrollBarV = ScrollBarV(paper, 20, 50); // TODO
-
-
+			self.scrollBarH = ScrollBarH(paper, PLOT_LEFT, PLOT_BOTTOM);
+			self.scrollBarV = ScrollBarV(paper, PLOT_LEFT - SLIDER_BREADTH, PLOT_TOP); 
 			
 			// TODO. refactor. scrollbars should own sliders.
 			self.scrollBarV.sliderVol = self.sliderVol;
@@ -535,10 +553,10 @@ function TransferPlot(top, left) {
 		};
 
 		self.SlidersAdjusted = function() {
-			var adj = self.scrollBarH.Adjusted() || self.scrollBarV.Adjusted()
+			var adj = self.scrollBarH.Adjusted() || self.scrollBarV.Adjusted();
 			self.scrollBarV.MakeClean();
 			self.scrollBarH.MakeClean();
-			return adj
+			return adj;
 		}
 		
 		self.UpdateSliders = function() {
@@ -580,36 +598,24 @@ function TransferPlot(top, left) {
 			//glitz.Step();
 			paper.view.draw();
 		};
+		plot.UpdateTransfer();
 
 		return plot;
 	}
-
 	return init();
 }
-
-// Get a reference to the canvas object
-    // var canvas = document.getElementById('myCanvas');
-    // // Create an empty project and a view for the canvas:
-    // paper.setup(canvas);
-    // var plot = Plot(paper, 700, 700);
-    // var glitz = Fun(paper);
-    
-    // paper.view.onFrame = function(event) {
-    //     plot.UpdateForbidden();
-    //     plot.UpdateSliders();
-    //     //plot.UpdateTransfer();
-        
-    //     glitz.Step();
-    //     paper.view.draw();
-    // };    
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
 	var plot = TransferPlot(50, 50);
+	
+	
 };
 
+
+
+
 // -----------------------------------------------------------------------------
-// -------------------------------------------------------
 // helper functions 
 function randomRangeInt(a, b) {
     var delta = b - a;
@@ -617,6 +623,9 @@ function randomRangeInt(a, b) {
     return a + r;
 }
 
+function coinFlipIsHeads() {
+	return Math.random() > .5;
+}
 
 
 
