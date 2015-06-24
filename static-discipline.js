@@ -1,23 +1,37 @@
-
-// nil is clearly superior to null.
 const nil = null;
+
+
+var StaticCommon = {};
+
+StaticCommon.MIT_RED = "#a31f34";
+StaticCommon.LOGIC_LEVEL_LO = 0;
+StaticCommon.LOGIC_LEVEL_HI = 5;
+StaticCommon.COLOR_OF_FORBIDDEN = StaticCommon.MIT_RED;
+StaticCommon.Clip = function(v) {
+	if (v < StaticCommon.LOGIC_LEVEL_LO) {
+		return StaticCommon.LOGIC_LEVEL_LO;
+	}
+	if (v > StaticCommon.LOGIC_LEVEL_HI) {
+		return StaticCommon.LOGIC_LEVEL_HI;
+	}
+	return v;
+};
 
 // Plot of the transfer function containing the user controls
 function TransferPlot(top, left) {
-	const LOGIC_LEVEL_HI = 5;
-	const LOGIC_LEVEL_LO = 0;
+	const LOGIC_LEVEL_LO = StaticCommon.LOGIC_LEVEL_LO;
+	const LOGIC_LEVEL_HI = StaticCommon.LOGIC_LEVEL_HI;
 	var PLOT_TOP = top; // 50
 	var PLOT_LEFT = left; // 50
-	var PLOT_WIDTH = 400;
-	var PLOT_HEIGHT = 400;
+	var PLOT_WIDTH = 500;
+	var PLOT_HEIGHT = 500;
 	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
 	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
 	
 	// slider thickness and breadth is hard coded in the svg string.
 	const SLIDER_THICK = 10;
 	const SLIDER_BREADTH = 30;
-	const ACTIVE_SLIDER_COLOR = "blue"
-
+	const ACTIVE_SLIDER_COLOR = "blue";
 	
 	// -----------------------------------------------------------------------------
 	function InheritAdjuster(self) {
@@ -54,9 +68,8 @@ function TransferPlot(top, left) {
 		};
 
 		self.IsHighlighted = function() {
-			return self._highlighted
-		}
-		
+			return self._highlighted;
+		};
 	};
 
 	// -----------------------------------------------------------------------------
@@ -64,15 +77,15 @@ function TransferPlot(top, left) {
 		//self.label = new paper.
 		self.text = new paper.PointText(new paper.Point(50, 50));
 		self.text.fillColor = 'black';
-		self.text.content = txt
+		self.text.content = txt;
 		self.text.fontFamily = "courier";
 		self.text.fontSize = 16;
 
-		self.SetTextX = function(x) { self.text.position.x = x }
-		self.SetTextY = function(y) { self.text.position.y = y }
+		self.SetTextX = function(x) { self.text.position.x = x; };
+		self.SetTextY = function(y) { self.text.position.y = y; };
 		self.SetTextLoc = function(x, y) {
 			self.SetTextX(x); self.SetTextY(y);
-		}
+		};
 	}
 	
 	// -----------------------------------------------------------------------------
@@ -240,16 +253,6 @@ function TransferPlot(top, left) {
 		self.init();
 		return self;
 	}
-
-	function Clip(v) {
-		if (v < LOGIC_LEVEL_LO) {
-			return LOGIC_LEVEL_LO
-		}
-		if (v > LOGIC_LEVEL_HI) {
-			return LOGIC_LEVEL_HI
-		}
-		return v
-	}
 	
 	// -----------------------------------------------------------------------------
 	function SliderVih(paper) {
@@ -284,8 +287,9 @@ function TransferPlot(top, left) {
 		};
 
 		self.Volts = function() {
-			return Clip(LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH))
-		}
+			var v = LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH);
+			return StaticCommon.Clip(v);
+		};
 		
 		self.UpdateLine = function(x, y) {
 			if (self.line != nil) {
@@ -328,8 +332,9 @@ function TransferPlot(top, left) {
 		};
 		
 		self.Volts = function() {
-			return Clip(LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH))
-		}
+			var v = (LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH));
+			return StaticCommon.Clip(v);
+		};
 
 		self.MoveTo = function(x) { 
 			self.SetX(x);
@@ -368,7 +373,7 @@ function TransferPlot(top, left) {
 			paper: paper
 		};
 		InheritSliderStyle(self);
-		InheritSliderLabel(self, "Voh")
+		InheritSliderLabel(self, "Voh");
 		
 		self.init = function() {
 			self.path.rotate(90);
@@ -376,7 +381,7 @@ function TransferPlot(top, left) {
 		
 		self.Volts = function() {
 			return LOGIC_LEVEL_HI * (self.Y() / (PLOT_BOTTOM - PLOT_TOP))
-		}
+		};
 
 		self.SetY = function(y) {
 			return self.y = PLOT_BOTTOM - y;
@@ -386,15 +391,16 @@ function TransferPlot(top, left) {
 		};
 
 		self.Volts = function() {
-			return Clip(LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT))
-		}
+			var v = LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT);
+			return StaticCommon.Clip(v);
+		};
 
 		self.SetV = function(v) {
-			v = Clip(v)
+			v = StaticCommon.Clip(v);
 			var ratio = v / LOGIC_LEVEL_HI;
 			var px = ratio * PLOT_HEIGHT;
 			self.MoveTo(px);
-		}
+		};
 		
 		self.MoveTo = function(y) {        
 			self.SetY(y);
@@ -445,15 +451,16 @@ function TransferPlot(top, left) {
 		};
 		
 		self.Volts = function() {
-			return Clip(LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT))
-		}
+			var v = LOGIC_LEVEL_HI * ((PLOT_BOTTOM - self.Y()) / PLOT_HEIGHT);
+			return StaticCommon.Clip(v);
+		};
 		
 		self.SetV = function(v) {
-			v = Clip(v)
+			v = StaticCommon.Clip(v);
 			var ratio = v / LOGIC_LEVEL_HI;
 			var px = ratio * PLOT_HEIGHT;
 			self.MoveTo(SLIDER_THICK + px );
-		}
+		};
 
 		self.MoveTo = function(y) {
 			y -= SLIDER_THICK / 2;
@@ -557,6 +564,7 @@ function TransferPlot(top, left) {
 			forbiddenR: nil,
 			tranferFunc: nil,
 			lastActive: nil, // The last active slider.
+			noiseMarginObject: nil,
 			end:nil
 		};
 		InheritAdjuster(self);
@@ -588,10 +596,10 @@ function TransferPlot(top, left) {
 			self.scrollBarH.sliderVil = self.sliderVil;
 			self.scrollBarH.sliderVih = self.sliderVih;
 		};
-		self.Vol = function() { return self.sliderVol.Volts(); }
-		self.Voh = function() { return self.sliderVoh.Volts(); }
-		self.Vil = function() { return self.sliderVil.Volts(); }
-		self.Vih = function() { return self.sliderVih.Volts(); }
+		self.Vol = function() { return self.sliderVol.Volts(); };
+		self.Voh = function() { return self.sliderVoh.Volts(); };
+		self.Vil = function() { return self.sliderVil.Volts(); };
+		self.Vih = function() { return self.sliderVih.Volts(); };
 		self.initTranferFunc = function() {
 			self.transferFunc = RandomTransferFunction();
 		};
@@ -602,7 +610,7 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y(); 
 			var bot = self.sliderVol.Y();
-			var right = self.sliderVil.X() + SLIDER_THICK / 2 - 1 
+			var right = self.sliderVil.X() + SLIDER_THICK / 2 - 1; 
 			
 			var p1 = new paper.Point(PLOT_LEFT, top+1); 
 			var p2 = new paper.Point(right, bot-1);
@@ -616,13 +624,13 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y();
 			var bot = self.sliderVol.Y();
-			var left = self.sliderVih.X() - SLIDER_THICK / 2 + 1
+			var left = self.sliderVih.X() - SLIDER_THICK / 2 + 1;
 			var right = PLOT_RIGHT; 
 			
 			var p1 = new paper.Point(left, top+1);
 			var p2 = new paper.Point(right, bot-1);
 			self.forbiddenR = new paper.Path.Rectangle(p1, p2);
-			self.forbiddenR.fillColor = '#743d3d';
+			self.forbiddenR.fillColor = StaticCommon.COLOR_OF_FORBIDDEN;
 		};
 		
 		self.UpdateForbidden = function() {
@@ -635,7 +643,7 @@ function TransferPlot(top, left) {
 			self.scrollBarV.MakeClean();
 			self.scrollBarH.MakeClean();
 			return adj;
-		}
+		};
 
 		self.UpdateLastActiveSlider = function() {
 			if (self.sliderVil.IsHighlighted()) {
@@ -650,10 +658,10 @@ function TransferPlot(top, left) {
 			if (self.sliderVoh.IsHighlighted()) {
 				self.lastActiveSlider = "Voh";
 			}
-		}
+		};
 		
 		self.UpdateSliders = function() {
-			self.UpdateLastActiveSlider()
+			self.UpdateLastActiveSlider();
 			// ok, so this is involved, but not complicated.  the static
 			// discipline enforces some invarients.
 			// vol < vil < vih < voh;
@@ -668,6 +676,13 @@ function TransferPlot(top, left) {
 
 			}
 
+			// update the noise margin parameters
+			if (self.noiseMarginObject != nil) {
+				self.noiseMarginObject.SetVil(self.Vil());
+				self.noiseMarginObject.SetVih(self.Vih());
+				self.noiseMarginObject.SetVol(self.Vol());
+				self.noiseMarginObject.SetVoh(self.Voh());
+			}
 			
 			// this means that when the user moves a slider, the
 			// invarients must be enforced every frame.  If vih is moving
@@ -678,6 +693,13 @@ function TransferPlot(top, left) {
 
 			
 		};
+		
+		self.WireMargin = function(margin) {
+			// Wire in the noise margin element after initing.  This
+			// design is sub optimal.
+			self.noiseMarginObject = margin;
+		};
+		
 
 		self.UpdateTransfer = function() {
 			self.transferFunc.Update(paper, self);
@@ -687,6 +709,7 @@ function TransferPlot(top, left) {
 		self.initTranferFunc();
 		return self;
 	}
+	
 	
 	// -----------------------------------------------------------------------------
 	function init() {
@@ -713,13 +736,188 @@ function TransferPlot(top, left) {
 	return init();
 }
 
+// Noise Margin
+function NoiseMargin(top, left, width, height) {
+	// There is a left and right inverter. Between them is a dataline
+	// that has a noise visualization.  At the input terminal of the
+	// left inverter there is a digital 1 or 0, likewise for the
+	// output for the right inverter.
+	
+	// The right inverter is also equipped with the static discipline
+	// values Vil, Vih, that demonstrate how the noise margin
+	// is derived.
+
+	// After initing, this apparatus doesn't change geometry, however
+	// there are moving parts.  The dataline accumulates noise over
+	// its length from left to right in accordance to the static
+	// discipline.  Also, the Vil, Vih, Vol, Voh indicators move and
+	// are controlled from the API, therefore the following public
+	// methods will be needed.
+
+	// SetVil(volts)
+	// SetVih(volts)
+	// SetVol(volts)
+	// SetVoh(volts)
+
+	// SetDigitalIn(b :: bool), this will take care of changing the
+	// dataline value ~b, and output value of right inverter ~~b.
+
+	// UpdateFrame() will generate noise for the dataLine.
+	
+	const LOGIC_LEVEL_LO = StaticCommon.LOGIC_LEVEL_LO;
+	const LOGIC_LEVEL_HI = StaticCommon.LOGIC_LEVEL_HI;
+	const TOP = top;
+	const WIDTH = width;
+	const LEFT = left;
+	const RIGHT = LEFT + WIDTH;
+	const HEIGHT = height;
+	const BOTTOM = TOP + HEIGHT;
+	const GAPSIZE = 20; // the gap between parts
+
+	// device parameters
+	const WIDTH_OF_FORBIDDEN = 20;
+ 	const DEVICE_WIDTH = 120;
+	const DEVICE_HEIGHT = HEIGHT;
+	
+	function ConvertVoltsToPxY(v) {
+		// convert volts to pixels as measured from the bottom of the
+		// device boxes.  The bottom of the device box corresponds to
+		// LOGIC_LEVEL_LO=0 volts, while the top of corresponds to
+		// LOGIC_LEVEL_HI=5 volts.  The only hitch is that screen
+		// coordinates have an origin 0,0 in the top-left, so we need
+		// to flippit.
+		const pixelsPerVolt = HEIGHT / (LOGIC_LEVEL_HI - LOGIC_LEVEL_LO);
+		v = StaticCommon.Clip(v); // 
+		const numPixels = v * pixelsPerVolt;
+		return BOTTOM - numPixels;
+	}
+
+	function SkinnyBox(left, top, bottom) {
+		var p1 = new paper.Point(left, top);
+		var p2 = new paper.Point(left + WIDTH_OF_FORBIDDEN, bottom);
+		var box = new paper.Path.Rectangle(p1, p2);	
+		box.fillColor = StaticCommon.COLOR_OF_FORBIDDEN;
+		return box;
+	}
+	
+	function Inverter(left) {
+		var self = {
+			deviceBox: nil,
+			forbInBox: nil,
+			forbOutBox: nil,
+			vilText: nil,
+			vihText: nil,
+			left: left,			
+			right: left + DEVICE_WIDTH,
+			top: TOP,
+			vilPx: BOTTOM,
+			vihPx: TOP,
+			volPx: BOTTOM,
+			vohPx: TOP,
+			bottom: BOTTOM
+		};
+		
+		self.init = function() {
+			var p1 = new paper.Point(self.left, self.top);
+			var p2 = new paper.Point(self.right, self.bottom);
+			self.deviceBox = new paper.Path.Rectangle(p1, p2);	
+			self.deviceBox.fillColor = "lightgray";
+			self.replaceForbiddenBoxes();
+			return self;
+		};
+
+
+		self.replaceForbiddenBoxes = function() {
+			if (self.forbInBox != nil && self.forbInBox != nil) {
+				self.forbInBox.remove();
+				self.forbOutBox.remove();
+			}
+			self.forbInBox = SkinnyBox(self.left, self.vihPx, self.vilPx);
+			self.forbOutBox = SkinnyBox(self.right-WIDTH_OF_FORBIDDEN,
+										self.vohPx, self.volPx);
+		};
+		
+		self.SetVil = function(v) {
+			self.vilPx = ConvertVoltsToPxY(v);
+			self.replaceForbiddenBoxes();
+		};
+		
+		self.SetVih = function(v) {	
+			self.vihPx = ConvertVoltsToPxY(v);
+			self.replaceForbiddenBoxes();
+		};
+		
+		self.SetVol = function(v) {
+			self.volPx = ConvertVoltsToPxY(v);
+			self.replaceForbiddenBoxes();
+		};
+		
+		self.SetVoh = function(v) {
+			self.vohPx = ConvertVoltsToPxY(v);
+			self.replaceForbiddenBoxes();
+		};
+
+		
+		
+		
+		return self.init();
+	}
+	
+	function Parts() {
+		var self = {
+			inverterL: nil,
+			inverterR: nil,
+			dataLine: nil
+		};
+		
+		self.init = function() {
+			// create 
+			self.inverterL = Inverter(LEFT);
+			self.inverterR = Inverter(RIGHT - DEVICE_WIDTH);
+			return self;
+		};
+
+
+		self.SetVil = function(v) {
+			// self.inverterL ...
+			self.inverterL.SetVil(v);	
+			self.inverterR.SetVil(v);
+		};
+		
+		self.SetVih = function(v) {
+			self.inverterL.SetVih(v);	
+			self.inverterR.SetVih(v);
+		};
+		
+		self.SetVol = function(v) {
+			self.inverterL.SetVol(v);	
+			self.inverterR.SetVol(v);
+		};
+		
+		self.SetVoh = function(v) {
+			self.inverterL.SetVoh(v);	
+			self.inverterR.SetVoh(v);
+		};
+		
+		self.SetDigitalIn = function(b /*bool*/) {			
+		};
+		
+		return self.init();
+	}
+
+	return Parts();
+}
+
 // -----------------------------------------------------------------------------
 window.onload = function() {
 	var plot = TransferPlot(400, 100);
+	// function NoiseMargin(top, left, width, height) {
+	var CHANGEME = 500;
+	var margin = NoiseMargin(210, 100, CHANGEME, 120);
+	plot.WireMargin(margin);
+	
+	console.log(margin);
 };
-
-
-
 
 // -----------------------------------------------------------------------------
 // helper functions 
