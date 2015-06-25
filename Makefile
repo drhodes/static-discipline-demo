@@ -16,7 +16,7 @@ clean:
 	-@trash *~ 2>/dev/null || true
 
 serve:
-	@echo visit http://0.0.0.0:8000/static-discipline.html
+	@echo visit http://127.0.0.1:8000/static-discipline.html
 	python -m SimpleHTTPServer
 
 

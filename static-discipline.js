@@ -1,8 +1,6 @@
 const nil = null;
 
-
 var StaticCommon = {};
-
 StaticCommon.MIT_RED = "#a31f34";
 StaticCommon.LOGIC_LEVEL_LO = 0;
 StaticCommon.LOGIC_LEVEL_HI = 5;
@@ -248,7 +246,6 @@ function TransferPlot(top, left) {
 				return [self.sliderVih, self.sliderVil];
 			}
 		};
-
 		
 		self.init();
 		return self;
@@ -275,7 +272,7 @@ function TransferPlot(top, left) {
 			return self.x = x + PLOT_LEFT + (SLIDER_THICK/2);
 		};  
 		self.X = function(x) {
-			return self.x;
+			return self.x //- (SLIDER_THICK)
 		};  
 		
 		self.MoveTo = function(x) { 
@@ -283,12 +280,19 @@ function TransferPlot(top, left) {
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
 			self.path.position = new paper.Point(self.x, y);
 			self.UpdateLine(x,y);
-			self.SetTextLoc(x+PLOT_LEFT+SLIDER_THICK*3, y)
+			self.SetTextLoc(x + PLOT_LEFT + SLIDER_THICK * 3, y)
 		};
 
 		self.Volts = function() {
 			var v = LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH);
 			return StaticCommon.Clip(v);
+		};
+
+		self.SetV = function(v) {
+			v = StaticCommon.Clip(v);
+			var ratio = v / LOGIC_LEVEL_HI;
+			var px = ratio * PLOT_WIDTH;
+			self.MoveTo(px);
 		};
 		
 		self.UpdateLine = function(x, y) {
@@ -330,12 +334,21 @@ function TransferPlot(top, left) {
 		self.X = function(x) {
 			return self.x;
 		};
+
+
 		
 		self.Volts = function() {
 			var v = (LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH));
 			return StaticCommon.Clip(v);
 		};
 
+		self.SetV = function(v) {
+			v = StaticCommon.Clip(v);
+			var ratio = v / LOGIC_LEVEL_HI;
+			var px = ratio * PLOT_WIDTH;
+			self.MoveTo(px);
+		};
+		
 		self.MoveTo = function(x) { 
 			self.SetX(x);
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
@@ -398,8 +411,8 @@ function TransferPlot(top, left) {
 		self.SetV = function(v) {
 			v = StaticCommon.Clip(v);
 			var ratio = v / LOGIC_LEVEL_HI;
-			var px = ratio * PLOT_HEIGHT;
-			self.MoveTo(px);
+			var py = ratio * PLOT_HEIGHT;
+			self.MoveTo(py);
 		};
 		
 		self.MoveTo = function(y) {        
@@ -666,16 +679,71 @@ function TransferPlot(top, left) {
 			// discipline enforces some invarients.
 			// vol < vil < vih < voh;
 			//console.log([self.Vol(), self.Voh()])
+			
+			var nudge = 0.01 // volts
 			if (self.lastActiveSlider == "Vil") {
-				if (self.Vil() > self.Vol()) {
-					self.sliderVol.SetV(self.Vil());
+				if (self.Vih() > self.Voh()) {
+					self.sliderVih.SetV(self.Voh() - nudge)
 				}
-				if (self.Vol() > self.Voh()) {
-					self.sliderVoh.SetV(self.Vol()+.1);
+				if (self.Vil() > self.Vih()) {
+					self.sliderVih.SetV(self.Vil() + nudge)
 				}
-
+				if (self.Vol() > self.Vil()) {
+					self.sliderVol.SetV(self.Vil() - nudge)
+				}
 			}
+			
+			if (self.lastActiveSlider == "Vol") {
+				if (self.Vih() > self.Voh()) {
+					self.sliderVih.SetV(self.Voh() - nudge)
+				}
+				if (self.Vil() > self.Vih()) {
+					self.sliderVil.SetV(self.Vih() - nudge)
+				}
+				if (self.Vol() > self.Vil()) {
+					self.sliderVil.SetV(self.Vol() + nudge)
+				}
+				//console.log([self.Vil(), self.Vih()])
+			}
+			
+			if (self.lastActiveSlider == "Vih") {
+				// if (self.Vih() > self.Voh()) {
+				// 	self.sliderVih.SetV(self.Voh() - nudge)
+				// }
+				if (self.Vil() > self.Vih()) {
+					self.sliderVil.SetV(self.Vih() - nudge)
+				}
+				if (self.Vol() > self.Vil()) {
+					self.sliderVol.SetV(self.Vil() - nudge)
+				}
+			}
+			
+			// if (self.lastActiveSlider == "Voh") {
+			// }
+			
+			// if (self.Vil() > self.Vih()) {
+			// 	self.sliderVih.SetV(self.Vil() + nudge)
+			// }
+			
+			
+			// if (self.Vih() > self.Voh()) {
+			// 	self.sliderVih.SetV(self.Voh() - nudge)
+			// }
+			// if (self.Vil() > self.Vih()) {
+			// 	self.sliderVil.SetV(self.Vih() - nudge)
+			// }
+			// if (self.Vol() > self.Vil()) {
+			// 	self.sliderVol.SetV(self.Vil() - nudge)
+			// }
 
+
+			
+			
+			// console.log(["vol", self.Vol()],
+			// 			["vil", self.Vil()],
+			// 			["vih", self.Vih()],
+			// 			["voh", self.Voh()])
+			
 			// update the noise margin parameters
 			if (self.noiseMarginObject != nil) {
 				self.noiseMarginObject.SetVil(self.Vil());
@@ -930,21 +998,6 @@ function randomRangeInt(a, b) {
 function coinFlipIsHeads() {
 	return Math.random() > .5;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
