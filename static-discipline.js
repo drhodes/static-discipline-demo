@@ -15,7 +15,7 @@ StaticCommon.Clip = function(v) {
 	return v;
 };
 
-// Plot of the transfer function containing the user controls
+// FILE: Plot of the transfer function containing the user controls
 function TransferPlot(top, left) {
 	const LOGIC_LEVEL_LO = StaticCommon.LOGIC_LEVEL_LO;
 	const LOGIC_LEVEL_HI = StaticCommon.LOGIC_LEVEL_HI;
@@ -48,19 +48,19 @@ function TransferPlot(top, left) {
 
 	// -----------------------------------------------------------------------------
 	function InheritSliderStyle(self) {
-		self.path = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
-		self.path.fillColor = 'black';
+		self.knob = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
+		self.knob.fillColor = 'black';
 		self._highlighted = false;
 
 		
 		self.Highlight = function() {
-			self.path.fillColor = ACTIVE_SLIDER_COLOR;
+			self.knob.fillColor = ACTIVE_SLIDER_COLOR;
 			self.line.strokeColor = 'blue';
 			self._highlighted = true;
 		};
 
 		self.UnHighlight = function() {
-			self.path.fillColor = 'black';
+			self.knob.fillColor = 'black';
 			self.line.strokeColor = 'lightgray';
 			self._highlighted = false;
 		};
@@ -204,7 +204,7 @@ function TransferPlot(top, left) {
 				// move the closest slider to this mouse position.
 				var x = evt.point.x;
 				var pair = self.ClosestSlider(x);
-				pair[0].MoveTo(x-PLOT_LEFT); 
+				pair[0].MoveTo(x); 
 				self.MakeDirty();
 			});
 			self.path.on('mouseup', function(evt) {
@@ -220,7 +220,7 @@ function TransferPlot(top, left) {
 				
 				// drag a slider only if cursor is in range.
 				if (x > PLOT_LEFT && x < PLOT_RIGHT) {
-					slider.MoveTo(x - PLOT_LEFT);
+					slider.MoveTo(x);
 				}
 			});    
 			self.path.on('mousemove', function(evt) {
@@ -256,7 +256,7 @@ function TransferPlot(top, left) {
 		// has a handle and a dotted line
 		var self = {        
 			x:0, y:0,
-			path: nil,
+			knob: nil,
 			line: nil,
 			tag: nil
 		};
@@ -264,23 +264,24 @@ function TransferPlot(top, left) {
 		InheritSliderLabel(self, "Vih");
 		
 		self.init = function() {
-			self.path.rotate(180);        
+			self.knob.rotate(180);        
 			self.tag = new paper.PointText();
 		};
 
 		self.SetX = function(x) { 
-			return self.x = x + PLOT_LEFT + (SLIDER_THICK/2);
+			return self.x = x
 		};  
 		self.X = function(x) {
-			return self.x //- (SLIDER_THICK)
+			return self.x
 		};  
 		
 		self.MoveTo = function(x) { 
 			self.SetX(x);
 			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
-			self.path.position = new paper.Point(self.x, y);
+			self.knob.position = new paper.Point(self.x + SLIDER_THICK/2, y);
 			self.UpdateLine(x,y);
-			self.SetTextLoc(x + PLOT_LEFT + SLIDER_THICK * 3, y)
+			var textPadding = SLIDER_THICK + 20;
+			self.SetTextLoc(self.x + SLIDER_THICK + textPadding, y)
 		};
 
 		self.Volts = function() {
@@ -292,7 +293,7 @@ function TransferPlot(top, left) {
 			v = StaticCommon.Clip(v);
 			var ratio = v / LOGIC_LEVEL_HI;
 			var px = ratio * PLOT_WIDTH;
-			self.MoveTo(px);
+			self.MoveTo(PLOT_LEFT + px);
 		};
 		
 		self.UpdateLine = function(x, y) {
@@ -301,7 +302,7 @@ function TransferPlot(top, left) {
 			}
 			// draw the line
 			// measure from the slider loc, the middle of the left side.
-			var x1 = self.x - SLIDER_THICK / 2;
+			var x1 = self.X() // - SLIDER_THICK / 2;
 			
 			var from = new paper.Point(x1, PLOT_BOTTOM);
 			var to = new paper.Point(x1, PLOT_TOP); 
@@ -318,7 +319,7 @@ function TransferPlot(top, left) {
 	function SliderVil(paper) {
 		var self = {        
 			x:0, y:0,
-			path: nil,
+			knob: nil,
 			line: nil,
 			paper: paper
 		};
@@ -326,16 +327,18 @@ function TransferPlot(top, left) {
 		InheritSliderLabel(self, "Vil");
 
 		self.init = function() {
+			// paper js doesn't offer a way to alter the origin with
+			// in a shape, so its position defined at the center of
+			// the sprite. Therefore, the shape the reprsents the slider knob
+			
 		};
 
 		self.SetX = function(x) {
-			return self.x = x + PLOT_LEFT - SLIDER_THICK/2;
+			return self.x = x
 		};  
 		self.X = function(x) {
 			return self.x;
 		};
-
-
 		
 		self.Volts = function() {
 			var v = (LOGIC_LEVEL_HI * ((self.X() - PLOT_LEFT) / PLOT_WIDTH));
@@ -348,13 +351,20 @@ function TransferPlot(top, left) {
 			var px = ratio * PLOT_WIDTH;
 			self.MoveTo(px);
 		};
+
+		// Adjusted X conpensates for the knob thickness.
+		self.AdjX = function() {
+			return self.X() - SLIDER_THICK / 2;
+		}
 		
+		// move the knob to x. the line should be directly on x
 		self.MoveTo = function(x) { 
 			self.SetX(x);
-			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2; 
-			self.path.position = new paper.Point(self.x, y);
+			var y = PLOT_BOTTOM + SLIDER_BREADTH / 2;
+			
+			self.knob.position = new paper.Point(self.AdjX(), y);			
 			self.DrawLine(y);
-			self.SetTextLoc(x + PLOT_LEFT - SLIDER_THICK * 3, y)
+			self.SetTextLoc(self.AdjX() - self.text.bounds.width, y)
 		};
 
 		self.DrawLine = function(y) {
@@ -362,10 +372,8 @@ function TransferPlot(top, left) {
 				self.line.remove();
 			}
 			// draw the line
-			var x1 = self.x + SLIDER_THICK / 2;
-			
-			var from = new paper.Point(x1, PLOT_BOTTOM);
-			var to = new paper.Point(x1, PLOT_TOP);
+			var from = new paper.Point(self.X(), PLOT_BOTTOM);
+			var to = new paper.Point(self.X(), PLOT_TOP);
 			
 			self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'white';
@@ -381,7 +389,7 @@ function TransferPlot(top, left) {
 		var self = {        
 			x: PLOT_LEFT - SLIDER_BREADTH / 2,
 			y: 0,  
-			path: nil,
+			knob: nil,
 			line: nil,
 			paper: paper
 		};
@@ -389,7 +397,7 @@ function TransferPlot(top, left) {
 		InheritSliderLabel(self, "Voh");
 		
 		self.init = function() {
-			self.path.rotate(90);
+			self.knob.rotate(90);
 		};
 		
 		self.Volts = function() {
@@ -417,7 +425,7 @@ function TransferPlot(top, left) {
 		
 		self.MoveTo = function(y) {        
 			self.SetY(y);
-			self.path.position = new paper.Point(self.x, self.y);
+			self.knob.position = new paper.Point(self.x, self.y);
 			// draw the line
 			self.UpdateLine(y);
 			var nudge = 5;
@@ -444,7 +452,7 @@ function TransferPlot(top, left) {
 		var self = {        
 			x: PLOT_LEFT - SLIDER_BREADTH/2,
 			y: 0,
-			path: nil,
+			knob: nil,
 			line: nil,
 			paper: paper
 		};
@@ -452,7 +460,7 @@ function TransferPlot(top, left) {
 		InheritSliderLabel(self, "Vol")
 		
 		self.init = function() {
-			self.path.rotate(-90);
+			self.knob.rotate(-90);
 		};
 
 		self.SetY = function(y) {
@@ -478,7 +486,7 @@ function TransferPlot(top, left) {
 		self.MoveTo = function(y) {
 			y -= SLIDER_THICK / 2;
 			self.SetY(y);
-			self.path.position = new paper.Point(self.x, self.y);
+			self.knob.position = new paper.Point(self.x, self.y);
 			// draw the line
 			self.UpdateLine(y);
 			var nudge = 5;
@@ -518,7 +526,7 @@ function TransferPlot(top, left) {
 			var y2 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y());
 			var p2 = new paper.Point(x2, y2);
 			// randomPoint on segment (vih, 0) -> (vil, Vol)
-			var x3 = plot.sliderVih.X() - smidgen;
+			var x3 = plot.sliderVih.X();
 			var y3 = randomRangeInt(plot.sliderVol.Y(), PLOT_BOTTOM);
 			var p3 = new paper.Point(x3, y3);
 			// randomPoint on segment (LOGIC_LEVEL_HI, 0) -> (LOGIC_LEVEL_HI, Vol)
@@ -623,7 +631,7 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y(); 
 			var bot = self.sliderVol.Y();
-			var right = self.sliderVil.X() + SLIDER_THICK / 2 - 1; 
+			var right = self.sliderVil.X() - 1;
 			
 			var p1 = new paper.Point(PLOT_LEFT, top+1); 
 			var p2 = new paper.Point(right, bot-1);
@@ -637,7 +645,7 @@ function TransferPlot(top, left) {
 			}
 			var top = self.sliderVoh.Y();
 			var bot = self.sliderVol.Y();
-			var left = self.sliderVih.X() - SLIDER_THICK / 2 + 1;
+			var left = self.sliderVih.X() + 1;
 			var right = PLOT_RIGHT; 
 			
 			var p1 = new paper.Point(left, top+1);
@@ -681,42 +689,42 @@ function TransferPlot(top, left) {
 			//console.log([self.Vol(), self.Voh()])
 			
 			var nudge = 0.01 // volts
-			if (self.lastActiveSlider == "Vil") {
-				if (self.Vih() > self.Voh()) {
-					self.sliderVih.SetV(self.Voh() - nudge)
-				}
-				if (self.Vil() > self.Vih()) {
-					self.sliderVih.SetV(self.Vil() + nudge)
-				}
-				if (self.Vol() > self.Vil()) {
-					self.sliderVol.SetV(self.Vil() - nudge)
-				}
-			}
+			// if (self.lastActiveSlider == "Vil") {
+			// 	if (self.Vih() > self.Voh()) {
+			// 		self.sliderVih.SetV(self.Voh() - nudge)
+			// 	}
+			// 	if (self.Vil() > self.Vih()) {
+			// 		self.sliderVih.SetV(self.Vil() + nudge)
+			// 	}
+			// 	if (self.Vol() > self.Vil()) {
+			// 		self.sliderVol.SetV(self.Vil() - nudge)
+			// 	}
+			// }
 			
-			if (self.lastActiveSlider == "Vol") {
-				if (self.Vih() > self.Voh()) {
-					self.sliderVih.SetV(self.Voh() - nudge)
-				}
-				if (self.Vil() > self.Vih()) {
-					self.sliderVil.SetV(self.Vih() - nudge)
-				}
-				if (self.Vol() > self.Vil()) {
-					self.sliderVil.SetV(self.Vol() + nudge)
-				}
-				//console.log([self.Vil(), self.Vih()])
-			}
+			// if (self.lastActiveSlider == "Vol") {
+			// 	if (self.Vih() > self.Voh()) {
+			// 		self.sliderVih.SetV(self.Voh() - nudge)
+			// 	}
+			// 	if (self.Vil() > self.Vih()) {
+			// 		self.sliderVil.SetV(self.Vih() - nudge)
+			// 	}
+			// 	if (self.Vol() > self.Vil()) {
+			// 		self.sliderVil.SetV(self.Vol() + nudge)
+			// 	}
+			// 	//console.log([self.Vil(), self.Vih()])
+			// }
 			
-			if (self.lastActiveSlider == "Vih") {
-				// if (self.Vih() > self.Voh()) {
-				// 	self.sliderVih.SetV(self.Voh() - nudge)
-				// }
-				if (self.Vil() > self.Vih()) {
-					self.sliderVil.SetV(self.Vih() - nudge)
-				}
-				if (self.Vol() > self.Vil()) {
-					self.sliderVol.SetV(self.Vil() - nudge)
-				}
-			}
+			// if (self.lastActiveSlider == "Vih") {
+			// 	// if (self.Vih() > self.Voh()) {
+			// 	// 	self.sliderVih.SetV(self.Voh() - nudge)
+			// 	// }
+			// 	if (self.Vil() > self.Vih()) {
+			// 		self.sliderVil.SetV(self.Vih() - nudge)
+			// 	}
+			// 	if (self.Vol() > self.Vil()) {
+			// 		self.sliderVol.SetV(self.Vil() - nudge)
+			// 	}
+			// }
 			
 			// if (self.lastActiveSlider == "Voh") {
 			// }
