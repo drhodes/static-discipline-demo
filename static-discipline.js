@@ -78,12 +78,14 @@ function TransferPlot(top, left) {
 			self.knob.fillColor = ACTIVE_SLIDER_COLOR;
 			self.line.strokeColor = 'blue';
 			self._highlighted = true;
+			self.SetTextToVolts();
 		};
 
 		self.UnHighlight = function() {
 			self.knob.fillColor = 'black';
 			self.line.strokeColor = 'lightgray';
 			self._highlighted = false;
+			self.SetTextToLabel();
 		};
 
 		self.IsHighlighted = function() {
@@ -93,7 +95,8 @@ function TransferPlot(top, left) {
 
 	// -----------------------------------------------------------------------------
 	function InheritSliderLabel(self, txt) {
-		self.text = new paper.PointText(new paper.Point(50, 50));
+		self.labelTxt = txt;
+		self.text = new paper.PointText(new paper.Point(50, 50));		
 		self.text.fillColor = 'black';
 		self.text.content = txt;
 		self.text.fontFamily = "courier";
@@ -104,15 +107,24 @@ function TransferPlot(top, left) {
 		self.SetTextLoc = function(x, y) {
 			self.SetTextX(x); self.SetTextY(y);
 		};
+
+		self.SetTextToVolts = function() {
+			var v = self.Volts();
+			self.text.content = self.Volts().toFixed(1);
+		};
+		self.SetTextToLabel = function() {
+			self.text.content = self.labelTxt;
+		};
+
 	}
 
 	// -----------------------------------------------------------------------------
-	var _show_count = 0;
+	var _show_flag = false;
 	function Popup(msg) {
-		if (_show_count > 0) {
+		if (_show_flag) {
 			return;
 		}
-		_show_count += 1;
+		_show_flag = true;
 		
 		var text = new paper.PointText(new paper.Point(0, 0));
 		text.fillColor = 'black';
@@ -125,7 +137,7 @@ function TransferPlot(top, left) {
 		
 		setTimeout( function() {
 			text.remove();
-			_show_count = 0;
+			_show_flag = false;
 		}, 500);		
 	}
 
