@@ -1,4 +1,24 @@
 // -*- js2 -*-
+// Copyright (c) <2015> <Derek Rhodes (physci@gmail.com)>
+
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 
 const nil = null;
 
@@ -929,6 +949,27 @@ function NoiseMargin(top, left, width, height) {
 		box.fillColor = StaticCommon.COLOR_OF_FORBIDDEN;
 		return box;
 	}
+
+	function InheritSliderLabel(self, txt) {
+		self.labelTxt = txt;
+		self.text = new paper.PointText(new paper.Point(50, 50));		
+		self.text.fillColor = 'black';
+		self.text.content = txt;
+		self.text.fontFamily = "courier";
+		self.text.fontSize = 16;
+		
+		self.SetTextX = function(x) { self.text.position.x = x; };
+		self.SetTextY = function(y) { self.text.position.y = y; };
+		self.TextHeight = function() {
+			return self.text.bounds.height;
+		};
+		self.TextWidth = function() {
+			return self.text.bounds.width;
+		};
+		self.SetTextLoc = function(x, y) {
+			self.SetTextX(x); self.SetTextY(y);
+		};
+	}
 	
 	function Inverter(left) {
 		var self = {
@@ -992,14 +1033,16 @@ function NoiseMargin(top, left, width, height) {
 		return self.init();
 	}
 
-	function InverterLine(x) {
+	function InverterLine(x, txt) {
 		var self = {
+			labelTxt: txt,
 			x: x, // px
 			y: ConvertVoltsToPxY(0),
 			volts: 0,			
 			line: nil,
-			length: 0,
+			length: 0
 		};
+		InheritSliderLabel(self, txt);
 
 		self.SetV = function(v) {
 			self.volts = v;
@@ -1022,9 +1065,28 @@ function NoiseMargin(top, left, width, height) {
 			self.line = self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'black';
 			self.line.strokeWidth = .5;
-			self.line.dashArray = [1, 1];			
+			self.line.dashArray = [1, 1];
+			self.AdjustTextLoc();
 		};
 
+		self.AdjustTextLoc = function() {
+			if (self.labelTxt === "Vil") {
+				self.SetTextLoc(self.x + self.TextWidth()/2,
+								self.y + self.TextHeight()/2);
+			}
+			if (self.labelTxt === "Vol") {
+				self.SetTextLoc(self.x + self.TextWidth()/2,
+								self.y + self.TextHeight()/2);
+			}
+			if (self.labelTxt === "Vih") {
+				self.SetTextLoc(self.x + self.TextWidth()/2,
+								self.y - self.TextHeight()/2);
+			}
+			if (self.labelTxt === "Voh") {
+				self.SetTextLoc(self.x + self.TextWidth()/2,
+								self.y - self.TextHeight()/2);
+			}
+		};
 		
 		return self.init();
 	}
@@ -1112,18 +1174,17 @@ function NoiseMargin(top, left, width, height) {
 			lineVil: nil,
 			lineVih: nil,
 			lineVoh: nil,
-			envelope: nil,
-			noise: nil,
+			envelope: nil
 		};
 		
 		self.init = function() {
 			// create 
 			self.inverterL = Inverter(LEFT);
 			self.inverterR = Inverter(RIGHT - DEVICE_WIDTH);
-			self.lineVil = InverterLine(RIGHT - DEVICE_WIDTH);
-			self.lineVih = InverterLine(RIGHT - DEVICE_WIDTH);
-			self.lineVol = InverterLine(RIGHT - GAPSIZE);
-			self.lineVoh = InverterLine(RIGHT - GAPSIZE);
+			self.lineVil = InverterLine(RIGHT - DEVICE_WIDTH, "Vil");
+			self.lineVih = InverterLine(RIGHT - DEVICE_WIDTH, "Vih");
+			self.lineVol = InverterLine(RIGHT - GAPSIZE, "Vol");
+			self.lineVoh = InverterLine(RIGHT - GAPSIZE, "Voh");
 			self.envelope = Envelope();
 			return self;
 		};
@@ -1188,79 +1249,3 @@ function randomRangeInt(a, b) {
 function coinFlipIsHeads() {
 	return Math.random() > .5;
 }
-
-function Fun(paper) {
-    var self = {
-        counter: 100,
-        finalText: "6.002.x - Static Discipline.     ",
-        txt:       "________________________________",
-        seen: {}, // a lookup table for the indices already fixed.
-        text: nil
-    };
-    self.text = new paper.PointText(new paper.Point(50, 40));
-    self.text.fillColor = 'black';
-    self.text.content = self.tempText;
-    self.text.fontFamily = "courier";
-    self.text.fontSize = 18;
-
-    self.GetRandom = function() {
-        var n = self.finalText.length;
-        return Math.floor(Math.random() * n);
-    };
-
-    self.GetRandomChar = function() {
-        var src = "zxcvnm,.asdf';kldfh[pioqwertiouery-01923458790356!@#$%^&*()_+QWERFJBNM<>?L:";
-        var n = src.length;
-        return src[Math.floor(Math.random() * n)];
-    };
-    
-    self.GetRandomEx = function() {
-        // get a random index not in seen.
-        var choices = [];
-        for (var i=0; i<self.finalText.length; i++) {
-            if (self.seen[i] != true) {
-                choices.push(i);
-            }
-        }
-        var n = choices.length;
-        var rIdx = Math.floor(Math.random() * n);
-        return rIdx;
-    };
-
-    self.UpdateText = function(idx, c) {
-        self.txt = self.txt.substring(0, idx) + c + self.txt.substring(idx+1);
-        self.text.content = self.txt;        
-    };
-
-    self.ChangeUnfixedChar = function() {
-        var idx = self.GetRandomEx();
-        var c = self.GetRandomChar();
-        self.UpdateText(idx, c);
-    };
-    
-    
-    self.Step_ = function() {
-        self.counter--;
-        if (self.txt == self.finalText) {
-            return;
-        }
-        if (self.counter < 0) {
-            self.text.content = self.finalText;
-            return;
-        }
-        var r = self.GetRandom();
-        var c = self.finalText[r];
-        
-        self.seen[r] = true;
-        self.UpdateText(r, c);
-        self.ChangeUnfixedChar();
-    };
-
-    self.Step = function() {
-        self.Step_();
-        self.Step_();
-    };
-    
-    return self;
-}
-
