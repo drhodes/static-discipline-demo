@@ -200,6 +200,7 @@ function TransferPlot(top, left) {
 			self.BackgroundOpacity = function(n) {
 				self.path.opacity = n;				
 			};
+			
 			// setup the event callbacks.
 			self.path.on('mouseleave', function() {
 				// deselect bots sliders.
@@ -1026,10 +1027,6 @@ function NoiseMargin(top, left, width, height) {
 			self.vohPx = ConvertVoltsToPxY(v);
 			self.replaceForbiddenBoxes();
 		};
-
-		
-		
-		
 		return self.init();
 	}
 
@@ -1091,11 +1088,45 @@ function NoiseMargin(top, left, width, height) {
 		return self.init();
 	}
 	
-	function NoiseLines() {
-		// 
+	function TopNoiseLine(voh, vih) {
+		// this is
+		var self = {
+			path: nil,
+			voh: voh,
+			vih: vih
+		};
+		
+		self.init = function() {
+			var p1 = new paper.Point(LEFT + DEVICE_WIDTH, TOP);
+			var deltaY = ConvertVoltsToPxY(vih) - ConvertVoltsToPxY(voh);
+			var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
+			var slope = deltaY / deltaX;
+			var numSteps = 100;
+			var dx = deltaX / numSteps;
+			var segments = [];
+			
+			for (var step = 0; step <= numSteps; step++) {
+				var x = LEFT + DEVICE_WIDTH + step * dx;
+				var y = randomRangeInt(TOP, slope * step*dx + ConvertVoltsToPxY(voh));
+				var p = new paper.Point(x, y);
+				segments.push(p);
+			}
+			
+			self.path = new paper.Path(segments);
+			self.path.strokeColor = "black";
+			self.path.strokeWidth = .5;
+			return self;
+		};
+
+		self.Remove = function() {
+			self.path.remove();
+		};
+		
+		return self.init();
 	}
 
 	function Envelope() {
+		// A rough boundary for typical noise
 		// This is represented by two lines, one from VOH on left
 		// inverter to VIH on the right inverter and another from VOL
 		// on the left inverter to VIL on the right inverter. It also
@@ -1118,7 +1149,7 @@ function NoiseMargin(top, left, width, height) {
 			var line = new paper.Path.Line(from, to);
 			line.strokeColor = 'grey';
 			line.strokeWidth = .5;
-			//line.dashArray = [2, 4];
+			line.dashArray = [2, 10];
 			return line;
 		};
 		
@@ -1167,6 +1198,7 @@ function NoiseMargin(top, left, width, height) {
 
 	function Parts() {
 		var self = {
+			vil:0, vol:0, vih: 0, voh:0,
 			inverterL: nil,
 			inverterR: nil,
 			dataLine: nil,
@@ -1174,7 +1206,8 @@ function NoiseMargin(top, left, width, height) {
 			lineVil: nil,
 			lineVih: nil,
 			lineVoh: nil,
-			envelope: nil
+			envelope: nil,
+			topNoiseLine: nil
 		};
 		
 		self.init = function() {
@@ -1186,34 +1219,49 @@ function NoiseMargin(top, left, width, height) {
 			self.lineVol = InverterLine(RIGHT - GAPSIZE, "Vol");
 			self.lineVoh = InverterLine(RIGHT - GAPSIZE, "Voh");
 			self.envelope = Envelope();
+			self.topNoise = TopNoiseLine();
 			return self;
 		};
 
+		self.ReinitNoise = function() {
+			if (self.topNoise != nil) {
+				self.topNoise.Remove();
+			}
+			self.topNoise = TopNoiseLine(self.voh, self.vih);
+		};
+		
 		self.SetVil = function(v) {
+			self.vil = v;
 			// self.inverterL ...
 			self.inverterL.SetVil(v);			
 			self.inverterR.SetVil(v);
 			self.lineVil.SetV(v);
 			self.envelope.SetVil(v);
+			self.ReinitNoise();
 		};		
 		self.SetVih = function(v) {
+			self.vih = v;
 			self.inverterL.SetVih(v);	
 			self.inverterR.SetVih(v);
 			self.lineVih.SetV(v);
 			self.envelope.SetVih(v);
+			self.ReinitNoise();
 		};		
 		self.SetVol = function(v) {
+			self.vol = v;
 			self.inverterL.SetVol(v);	
 			self.inverterR.SetVol(v);
 			self.lineVol.SetV(v);
 			self.envelope.SetVol(v);
-
+			self.ReinitNoise();
 		};		
 		self.SetVoh = function(v) {
+			self.voh = v;
 			self.inverterL.SetVoh(v);	
 			self.inverterR.SetVoh(v);
 			self.lineVoh.SetV(v);
 			self.envelope.SetVoh(v);
+			self.ReinitNoise();
 		};
 		
 		self.SetDigitalIn = function(b /*bool*/) { 
