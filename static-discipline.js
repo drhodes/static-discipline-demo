@@ -1021,13 +1021,88 @@ function NoiseMargin(top, left, width, height) {
 			var to = new paper.Point(self.x+self.length, self.y);
 			self.line = self.line = new paper.Path.Line(from, to);
 			self.line.strokeColor = 'black';
-			self.line.dashArray = [2, 4];			
+			self.line.strokeWidth = .5;
+			self.line.dashArray = [1, 1];			
 		};
 
 		
 		return self.init();
 	}
 	
+	function NoiseLines() {
+		// 
+	}
+
+	function Envelope() {
+		// This is represented by two lines, one from VOH on left
+		// inverter to VIH on the right inverter and another from VOL
+		// on the left inverter to VIL on the right inverter. It also
+		// serves as a visual guard indicating the linear nature of
+		// how noise grows on data lines as a function of distance.
+		
+		// That is a bit misleading, an onslaught of noise out of the
+		// gate is possible and allowed.
+		var self = {
+			topLine: nil,
+			botLine: nil,
+			vil:0, vol:0, vih:0, vil:0
+		};
+		
+		self.init = function() {
+			return self;
+		};
+
+		self.makeLine = function(from, to) {
+			var line = new paper.Path.Line(from, to);
+			line.strokeColor = 'grey';
+			line.strokeWidth = .5;
+			//line.dashArray = [2, 4];
+			return line;
+		};
+		
+		self.makeLines = function() {
+			// top line
+			if (self.topLine != nil) {
+				self.topLine.remove();
+			}
+			var y1 = ConvertVoltsToPxY(self.voh);
+			var y2 = ConvertVoltsToPxY(self.vih);
+			var from = new paper.Point(LEFT + DEVICE_WIDTH, y1);
+			var to = new paper.Point(RIGHT - DEVICE_WIDTH, y2);
+			self.topLine = self.makeLine(from, to);
+			
+			// bottom line
+			if (self.botLine != nil) {
+				self.botLine.remove();
+			}
+			var y1 = ConvertVoltsToPxY(self.vol);
+			var y2 = ConvertVoltsToPxY(self.vil);
+			var from = new paper.Point(LEFT + DEVICE_WIDTH, y1);
+			var to = new paper.Point(RIGHT - DEVICE_WIDTH, y2);
+			self.botLine = self.makeLine(from, to);
+			
+			
+		};			
+		self.SetVil = function(v) {
+			self.vil = v;
+			self.makeLines();
+		};
+		self.SetVih = function(v) {
+			self.vih = v;
+			self.vihPx = ConvertVoltsToPxY(v);
+		};
+		self.SetVol = function(v) {
+			self.vol = v;
+			self.volPx = ConvertVoltsToPxY(v);
+		};
+		self.SetVoh = function(v) {
+			self.voh = v;
+			self.vohPx = ConvertVoltsToPxY(v);
+		};
+		
+		return self.init();
+	};
+
 	function Parts() {
 		var self = {
 			inverterL: nil,
@@ -1036,7 +1111,8 @@ function NoiseMargin(top, left, width, height) {
 			lineVol: nil,
 			lineVil: nil,
 			lineVih: nil,
-			lineVoh: nil
+			lineVoh: nil,
+			envelope: nil
 		};
 		
 		self.init = function() {
@@ -1047,6 +1123,7 @@ function NoiseMargin(top, left, width, height) {
 			self.lineVih = InverterLine(RIGHT - DEVICE_WIDTH);
 			self.lineVol = InverterLine(RIGHT - GAPSIZE);
 			self.lineVoh = InverterLine(RIGHT - GAPSIZE);
+			self.envelope = Envelope();
 			return self;
 		};
 
@@ -1055,35 +1132,33 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterL.SetVil(v);			
 			self.inverterR.SetVil(v);
 			self.lineVil.SetV(v);
-
-		};
-		
+			self.envelope.SetVil(v);
+		};		
 		self.SetVih = function(v) {
 			self.inverterL.SetVih(v);	
 			self.inverterR.SetVih(v);
 			self.lineVih.SetV(v);
-		};
-		
+			self.envelope.SetVih(v);
+		};		
 		self.SetVol = function(v) {
 			self.inverterL.SetVol(v);	
 			self.inverterR.SetVol(v);
 			self.lineVol.SetV(v);
-		};
-		
+			self.envelope.SetVol(v);
+
+		};		
 		self.SetVoh = function(v) {
 			self.inverterL.SetVoh(v);	
 			self.inverterR.SetVoh(v);
 			self.lineVoh.SetV(v);
+			self.envelope.SetVoh(v);
 		};
 		
-		self.SetDigitalIn = function(b /*bool*/) {			
+		self.SetDigitalIn = function(b /*bool*/) { 
 		};
+
 		
 		return self.init();
-	}
-
-	function NoiseLines() {
-		// 
 	}
 
 	
