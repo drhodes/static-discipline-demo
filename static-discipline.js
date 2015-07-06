@@ -67,7 +67,7 @@ function TransferPlot(top, left) {
 			self._dirty = true;
 		};
 	}
-
+	
 	// -----------------------------------------------------------------------------
 	function InheritSliderStyle(self) {
 		self.knob = new paper.Path("m 10,1022.3622 0,30 -10,-10 0,-10 z");
@@ -105,6 +105,30 @@ function TransferPlot(top, left) {
 			self.SetTextX(x); self.SetTextY(y);
 		};
 	}
+
+	// -----------------------------------------------------------------------------
+	var _show_count = 0;
+	function Popup(msg) {
+		if (_show_count > 0) {
+			return;
+		}
+		_show_count += 1;
+		
+		var text = new paper.PointText(new paper.Point(0, 0));
+		text.fillColor = 'black';
+		text.content = msg;
+		text.fontFamily = "courier";
+		text.fontSize = 16;
+		text.position.x = PLOT_LEFT + text.bounds.width/2;
+		text.position.y = PLOT_TOP - text.bounds.height/2;
+
+		
+		setTimeout( function() {
+			text.remove();
+			_show_count = 0;
+		}, 500);		
+	}
+
 	
 	// -----------------------------------------------------------------------------
 	function ScrollBarV(paper, left, top) {
@@ -589,6 +613,7 @@ function TransferPlot(top, left) {
 			self.path.lineTo(p4);
 			self.path.strokeColor = "BLACK";
 			self.path.strokeWidth = 2;
+			Popup("Generating random, valid transfer function");
 		};
 		
 		return self;
