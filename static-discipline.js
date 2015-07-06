@@ -1112,7 +1112,8 @@ function NoiseMargin(top, left, width, height) {
 			lineVil: nil,
 			lineVih: nil,
 			lineVoh: nil,
-			envelope: nil
+			envelope: nil,
+			noise: nil,
 		};
 		
 		self.init = function() {
@@ -1170,7 +1171,7 @@ window.onload = function() {
 	var plot = TransferPlot(400, 100);
 	// function NoiseMargin(top, left, width, height) {
 	var CHANGEME = 500;
-	var margin = NoiseMargin(210, 100, CHANGEME, 120);
+	var margin = NoiseMargin(210, 100, CHANGEME, 150);
 	plot.WireMargin(margin);
 	
 	console.log(margin);
@@ -1188,12 +1189,6 @@ function coinFlipIsHeads() {
 	return Math.random() > .5;
 }
 
-
-
-
-
-
-/// 
 function Fun(paper) {
     var self = {
         counter: 100,
