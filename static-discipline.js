@@ -991,41 +991,89 @@ function NoiseMargin(top, left, width, height) {
 		
 		return self.init();
 	}
+
+	function InverterLine(x) {
+		var self = {
+			x: x, // px
+			y: ConvertVoltsToPxY(0),
+			volts: 0,			
+			line: nil,
+			length: 0,
+		};
+
+		self.SetV = function(v) {
+			self.volts = v;
+			self.y = ConvertVoltsToPxY(v);
+			self.moveLine();
+		};
+		
+		self.init = function() {
+			self.length = RIGHT - x + GAPSIZE;
+			self.moveLine();
+			return self;
+		};
+
+		self.moveLine = function() {
+			if (self.line != nil) {
+				self.line.remove();
+			}
+			var from = new paper.Point(self.x, self.y);
+			var to = new paper.Point(self.x+self.length, self.y);
+			self.line = self.line = new paper.Path.Line(from, to);
+			self.line.strokeColor = 'black';
+			self.line.dashArray = [2, 4];			
+		};
+
+		
+		return self.init();
+	}
 	
 	function Parts() {
 		var self = {
 			inverterL: nil,
 			inverterR: nil,
-			dataLine: nil
+			dataLine: nil,
+			lineVol: nil,
+			lineVil: nil,
+			lineVih: nil,
+			lineVoh: nil
 		};
 		
 		self.init = function() {
 			// create 
 			self.inverterL = Inverter(LEFT);
 			self.inverterR = Inverter(RIGHT - DEVICE_WIDTH);
+			self.lineVil = InverterLine(RIGHT - DEVICE_WIDTH);
+			self.lineVih = InverterLine(RIGHT - DEVICE_WIDTH);
+			self.lineVol = InverterLine(RIGHT - GAPSIZE);
+			self.lineVoh = InverterLine(RIGHT - GAPSIZE);
 			return self;
 		};
 
-
 		self.SetVil = function(v) {
 			// self.inverterL ...
-			self.inverterL.SetVil(v);	
+			self.inverterL.SetVil(v);			
 			self.inverterR.SetVil(v);
+			self.lineVil.SetV(v);
+
 		};
 		
 		self.SetVih = function(v) {
 			self.inverterL.SetVih(v);	
 			self.inverterR.SetVih(v);
+			self.lineVih.SetV(v);
 		};
 		
 		self.SetVol = function(v) {
 			self.inverterL.SetVol(v);	
 			self.inverterR.SetVol(v);
+			self.lineVol.SetV(v);
 		};
 		
 		self.SetVoh = function(v) {
 			self.inverterL.SetVoh(v);	
 			self.inverterR.SetVoh(v);
+			self.lineVoh.SetV(v);
 		};
 		
 		self.SetDigitalIn = function(b /*bool*/) {			
@@ -1034,6 +1082,11 @@ function NoiseMargin(top, left, width, height) {
 		return self.init();
 	}
 
+	function NoiseLines() {
+		// 
+	}
+
+	
 	return Parts();
 }
 
