@@ -553,7 +553,6 @@ function TransferPlot(top, left) {
 		};
 		
 		self.SetV = function(v) {
-			console.log("Slider.Vil.SetV", v);
 			v = StaticCommon.Clip(v);
 			var ratio = v / LOGIC_LEVEL_HI;
 			var px = ratio * PLOT_WIDTH;
@@ -776,13 +775,11 @@ function TransferPlot(top, left) {
 			// ok, so this is involved, but not complicated.  the static
 			// discipline enforces some constraints.
 			// vol < vil < vih < voh;
-			//console.log([self.Vol(), self.Voh()])
 			
 			var nudge = 0.01; // volts
 			if (self.lastActiveSlider == "Vol") {
 				// !vol! < vil < vih < voh;
 				if (!(self.Vol() <= self.Vil())) {
-					console.log([self.Vol(), self.Vil()]);
 					self.sliderVil.SetV(self.Vol() + nudge);
 				}
 				if (!(self.Vil() <= self.Vih())) {
@@ -922,10 +919,10 @@ function NoiseMargin(top, left, width, height) {
 	const RIGHT = LEFT + WIDTH;
 	const HEIGHT = height;
 	const BOTTOM = TOP + HEIGHT;
-	const GAPSIZE = 20; // the gap between parts
+	const GAPSIZE = 30; // the gap between parts
 
 	// device parameters
-	const WIDTH_OF_FORBIDDEN = 20;
+	const WIDTH_OF_FORBIDDEN = 30;
 	
 	// properties of the inverter device.
  	const DEVICE_WIDTH = 120;
@@ -1227,15 +1224,15 @@ function NoiseMargin(top, left, width, height) {
 			self.text.content = "noise margin";
 			self.text.fontFamily = "courier";
 			self.text.fontSize = 16;
-			self.text.position.y -= self.text.bounds.height/2;
+			self.text.position.y -= self.text.bounds.height/4;
 
 			var p = new paper.Point(from.x + nudge, mid);
 			self.volts = new paper.PointText(p);
 			self.volts.fillColor = 'black';
-			self.volts.content = margin;
+			self.volts.content = margin + "V";
 			self.volts.fontFamily = "courier";
 			self.volts.fontSize = 16;
-			self.volts.position.y += self.volts.bounds.height;
+			self.volts.position.y += self.volts.bounds.height/2;
 			
 			return self;
 		};
@@ -1375,7 +1372,6 @@ window.onload = function() {
 	var margin = NoiseMargin(210, 100, CHANGEME, 150);
 	plot.WireMargin(margin);
 	
-	console.log(margin);
 };
 
 // -----------------------------------------------------------------------------
