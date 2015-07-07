@@ -965,6 +965,9 @@ function NoiseMargin(top, left, width, height) {
 		self.TextWidth = function() {
 			return self.text.bounds.width;
 		};
+		self.SetTextContent = function(txt) {
+			self.text.content = txt;
+		}
 		self.SetTextLoc = function(x, y) {
 			self.SetTextX(x); self.SetTextY(y);
 		};
@@ -1056,6 +1059,14 @@ function NoiseMargin(top, left, width, height) {
 			var x = self.line.bounds.right;
 			var y = self.line.bounds.top;
 			return new paper.Point(x, y);			
+		};
+
+		self.HideLine = function() {
+			self.line.opacity = 0;
+		};
+		
+		self.SetLabelTxtToVolts = function() {
+			self.labelTxt.content = self.volts;
 		};
 		
 		self.moveLine = function() {
@@ -1250,7 +1261,6 @@ function NoiseMargin(top, left, width, height) {
 		};
 		return self.init();
 	}
-
 	
 	function Parts() {
 		var self = {
@@ -1262,6 +1272,10 @@ function NoiseMargin(top, left, width, height) {
 			lineVil: nil,
 			lineVih: nil,
 			lineVoh: nil,
+			leftVol: nil,
+			leftVil: nil,
+			leftVih: nil,
+			leftVoh: nil,
 			envelope: nil,
 			topNoiseLine: nil,
 			marginArrow: nil
@@ -1275,6 +1289,10 @@ function NoiseMargin(top, left, width, height) {
 			self.lineVih = InverterLine(RIGHT - DEVICE_WIDTH, "Vih");
 			self.lineVol = InverterLine(RIGHT - GAPSIZE, "Vol");
 			self.lineVoh = InverterLine(RIGHT - GAPSIZE, "Voh");
+			self.leftVil = InverterLine(LEFT, "Vil");
+			self.leftVih = InverterLine(LEFT, "Vih");
+			self.leftVol = InverterLine(LEFT + DEVICE_WIDTH - WIDTH_OF_FORBIDDEN, "Vol");
+			self.leftVoh = InverterLine(LEFT + DEVICE_WIDTH - WIDTH_OF_FORBIDDEN, "Voh");
 			self.envelope = Envelope();
 			self.topNoise = TopNoiseLine();
 			return self;
@@ -1316,8 +1334,13 @@ function NoiseMargin(top, left, width, height) {
 			}
 			self.topNoise = TopNoiseLine(self.voh, self.vih);
 		};
-		
 
+		self.fixupLeftInverterIndicators = function(indicator, v) {
+			indicator.SetV(v);
+			indicator.SetTextContent(v.toFixed(1));
+			indicator.HideLine();
+		};
+		
 		
 		self.SetVil = function(v) {
 			self.vil = v;
@@ -1325,6 +1348,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterL.SetVil(v);			
 			self.inverterR.SetVil(v);
 			self.lineVil.SetV(v);
+			self.fixupLeftInverterIndicators(self.leftVil, v);
 			self.envelope.SetVil(v);
 			self.UpdateFrame();
 		};		
@@ -1333,6 +1357,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterL.SetVih(v);	
 			self.inverterR.SetVih(v);
 			self.lineVih.SetV(v);
+			self.fixupLeftInverterIndicators(self.leftVih, v);
 			self.envelope.SetVih(v);
 			self.UpdateFrame();
 		};		
@@ -1341,6 +1366,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterL.SetVol(v);	
 			self.inverterR.SetVol(v);
 			self.lineVol.SetV(v);
+			self.fixupLeftInverterIndicators(self.leftVol, v);
 			self.envelope.SetVol(v);
 			self.UpdateFrame();
 		};		
@@ -1349,6 +1375,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterL.SetVoh(v);	
 			self.inverterR.SetVoh(v);
 			self.lineVoh.SetV(v);
+			self.fixupLeftInverterIndicators(self.leftVoh, v);
 			self.envelope.SetVoh(v);
 			self.UpdateFrame();
 		};
