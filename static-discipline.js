@@ -926,6 +926,7 @@ function NoiseMargin(top, left, width, height) {
 
 	// device parameters
 	const WIDTH_OF_FORBIDDEN = 20;
+	
 	// properties of the inverter device.
  	const DEVICE_WIDTH = 120;
 	const DEVICE_HEIGHT = HEIGHT;
@@ -1053,6 +1054,13 @@ function NoiseMargin(top, left, width, height) {
 			return self;
 		};
 
+		self.Tip = function() {
+			// get the end tip of the line
+			var x = self.line.bounds.right;
+			var y = self.line.bounds.top;
+			return new paper.Point(x, y);			
+		};
+		
 		self.moveLine = function() {
 			if (self.line != nil) {
 				self.line.remove();
@@ -1074,6 +1082,7 @@ function NoiseMargin(top, left, width, height) {
 			if (self.labelTxt === "Vol") {
 				self.SetTextLoc(self.x + self.TextWidth()/2,
 								self.y + self.TextHeight()/2);
+
 			}
 			if (self.labelTxt === "Vih") {
 				self.SetTextLoc(self.x + self.TextWidth()/2,
@@ -1196,6 +1205,56 @@ function NoiseMargin(top, left, width, height) {
 		return self.init();
 	};
 
+	function MarginArrow(from, to, margin) {
+		var self = {
+			path: nil,
+			text: nil,
+			volts: nil
+		};
+
+		self.init = function() {
+			self.path = new paper.Path.Line(from, to);
+			self.path.strokeColor = "lightgreen";
+			self.path.strokeWidth = 5;
+			margin = margin.toFixed(2);
+
+			
+			var mid = (from.y + to.y) / 2;
+			var nudge = 4;
+			var p = new paper.Point(from.x + nudge, mid);
+			self.text = new paper.PointText(p);
+			self.text.fillColor = 'black';
+			self.text.content = "noise margin";
+			self.text.fontFamily = "courier";
+			self.text.fontSize = 16;
+			self.text.position.y -= self.text.bounds.height/2;
+
+			var p = new paper.Point(from.x + nudge, mid);
+			self.volts = new paper.PointText(p);
+			self.volts.fillColor = 'black';
+			self.volts.content = margin;
+			self.volts.fontFamily = "courier";
+			self.volts.fontSize = 16;
+			self.volts.position.y += self.volts.bounds.height;
+			
+			return self;
+		};
+		self.Remove = function() {
+			if (self.path != nil) {
+				self.path.remove();
+			}	
+			if (self.text != nil) {
+				self.text.remove();
+			}
+			if (self.volts != nil) {
+				self.volts.remove();
+			}
+		
+		};
+		return self.init();
+	}
+
+	
 	function Parts() {
 		var self = {
 			vil:0, vol:0, vih: 0, voh:0,
@@ -1207,7 +1266,8 @@ function NoiseMargin(top, left, width, height) {
 			lineVih: nil,
 			lineVoh: nil,
 			envelope: nil,
-			topNoiseLine: nil
+			topNoiseLine: nil,
+			marginArrow: nil
 		};
 		
 		self.init = function() {
@@ -1223,12 +1283,44 @@ function NoiseMargin(top, left, width, height) {
 			return self;
 		};
 
-		self.ReinitNoise = function() {
+		self.UpdateFrame = function() {
+			self.UpdateNoise();
+			self.UpdateArrow();
+		};
+		
+		self.UpdateArrow = function() {
+			var marginTop = self.voh - self.vih;
+			var marginBot = self.vil - self.vol;
+			
+			if (self.marginArrow != nil) {
+				// cleanup
+				self.marginArrow.Remove();
+			}
+			
+			
+			if (marginTop <= marginBot) {
+				// the top noise margin is THE noise margin
+				self.marginArrow = MarginArrow(self.lineVih.Tip(),
+											   self.lineVoh.Tip(),
+											   marginTop
+											  );
+			} else {
+				// the bottom noise margin is THE noise margin				
+				self.marginArrow = MarginArrow(self.lineVol.Tip(),
+											   self.lineVil.Tip(),
+											   marginBot
+											  );
+			}			
+		};
+		
+		self.UpdateNoise = function() {
 			if (self.topNoise != nil) {
 				self.topNoise.Remove();
 			}
 			self.topNoise = TopNoiseLine(self.voh, self.vih);
 		};
+		
+
 		
 		self.SetVil = function(v) {
 			self.vil = v;
@@ -1237,7 +1329,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterR.SetVil(v);
 			self.lineVil.SetV(v);
 			self.envelope.SetVil(v);
-			self.ReinitNoise();
+			self.UpdateFrame();
 		};		
 		self.SetVih = function(v) {
 			self.vih = v;
@@ -1245,7 +1337,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterR.SetVih(v);
 			self.lineVih.SetV(v);
 			self.envelope.SetVih(v);
-			self.ReinitNoise();
+			self.UpdateFrame();
 		};		
 		self.SetVol = function(v) {
 			self.vol = v;
@@ -1253,7 +1345,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterR.SetVol(v);
 			self.lineVol.SetV(v);
 			self.envelope.SetVol(v);
-			self.ReinitNoise();
+			self.UpdateFrame();
 		};		
 		self.SetVoh = function(v) {
 			self.voh = v;
@@ -1261,7 +1353,7 @@ function NoiseMargin(top, left, width, height) {
 			self.inverterR.SetVoh(v);
 			self.lineVoh.SetV(v);
 			self.envelope.SetVoh(v);
-			self.ReinitNoise();
+			self.UpdateFrame();
 		};
 		
 		self.SetDigitalIn = function(b /*bool*/) { 
