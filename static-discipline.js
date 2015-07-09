@@ -868,11 +868,12 @@ function TransferPlot(top, left) {
 		var margin = NoiseMargin(210, 100, CHANGEME, 150);	
 		plot.WireMargin(margin);
 
-		var d = new Date();
-
+		// hey!
+		var scm = Schematic(50, 100, CHANGEME, 100);
 
 		var tickTock = function() {
 			margin.ToggleDigitalIn();
+			scm.Toggle();
 			console.log("hi");
 			setTimeout(tickTock, 1000);
 		};
@@ -1447,10 +1448,130 @@ function NoiseMargin(top, left, width, height) {
 	return Parts();
 }
 
+// Schematic dichotomy 
+function Schematic(top, left, width, height) {
+	const TOP = top;
+	const LEFT = left;
+	const WIDTH = width;
+	const RIGHT = left + width;
+	const HEIGHT = height;
+	const BOTTOM = top + height;
+
+	const DEVICE_WIDTH = 120;
+	const DEVICE_HEIGHT = 120;
+
+	function Inverter(x, y) {
+		const svgString = "M 0 979.625 L 0 988.71875 L 0 1052.375 L 54.53125 1016 L 0 979.625 z M 54.53125 1016 C 54.53125 1019.0125 56.987538 1021.4375 60 1021.4375 C 63.012462 1021.4375 65.46875 1019.0125 65.46875 1016 C 65.46875 1012.9875 63.012462 1010.5312 60 1010.5312 C 56.987538 1010.5312 54.53125 1012.9875 54.53125 1016 z "
+		
+		var self = {
+			x: x, y: y,
+			nudgeX: 65, // these are hard coded values that serve to center
+			nudgeY: 60, // the inverter icon in the box, they should not change.
+			box: nil,
+			icon: nil
+		};
+		
+		self.init = function() {
+			var p1 = new paper.Point(x, y);
+			var p2 = new paper.Point(x + DEVICE_WIDTH,
+									 y + DEVICE_HEIGHT);			
+			self.deviceBox = new paper.Path.Rectangle(p1, p2);	
+			self.deviceBox.fillColor = "lightgray";
+			
+			
+			self.icon = new paper.Path(svgString);
+			self.icon.position = new paper.Point(x + self.nudgeX, y + self.nudgeY);
+			self.icon.strokeColor = 'black';
+			self.icon.fillColor = 'white';
+			self.icon.strokeWidth = 3;
+			return self;
+		};
+
+		self.LeftSide = function() {
+			const nudge = 2;
+			return self.x + self.icon.bounds.width/2 - nudge;
+		};
+		
+		self.RightSide = function() {
+			const nudge = 3;
+			return self.LeftSide() + self.icon.bounds.width + nudge;
+		};
+
+		return self.init();
+	}
+
+	function LineGroup() {
+		var self = {
+			lineL: nil,
+			lineM: nil,
+			lineR: nil,
+			toggleFlag: false
+		};
+
+		self.init = function() {
+			return self;
+		};
+		
+		self.drawLine = function(x1, x2) {
+			const lineWidth = 2;
+			var mid = TOP + DEVICE_HEIGHT/2 + lineWidth/2 - 1;
+			var from = new paper.Point(x1, mid);
+			var to = new paper.Point(x2, mid);
+			var line = new paper.Path.Line(from, to);
+			line.strokeColor = "black";
+			line.strokeWidth = lineWidth;
+			return line;
+		};
+		
+		self.drawLines = function(invL, invR) {
+			self.lineL = self.drawLine(0, invL.LeftSide());
+			self.lineM = self.drawLine(invL.RightSide(), invR.LeftSide());
+			self.lineR = self.drawLine(invR.RightSide(), 9999);
+			self.Toggle();
+		};
+
+		self.Toggle = function() {
+			if (self.toggleFlag) {
+				self.lineL.dashArray = [9, 9];
+				self.lineM.dashArray = [0, 0];
+				self.lineR.dashArray = [9, 9];
+			} else {
+				self.lineL.dashArray = [0, 0];
+				self.lineM.dashArray = [9, 9];
+				self.lineR.dashArray = [0, 0];
+			}
+			self.toggleFlag = !self.toggleFlag;
+		};
+		
+		return self.init();
+	}
+
+
+	function Parts() {
+		var self = {
+			invLeft: Inverter(LEFT, TOP),
+			invRight: Inverter(RIGHT - DEVICE_WIDTH, TOP),
+			lineGroup: LineGroup()
+		};
+
+		self.init = function() {
+			self.lineGroup.drawLines(self.invLeft, self.invRight);
+			return self;
+		};
+
+		self.Toggle = function() {
+			self.lineGroup.Toggle();
+		};
+		
+		return self.init();
+	}
+	
+	return Parts();
+}
+
 // -----------------------------------------------------------------------------
 window.onload = function() {
 	var plot = TransferPlot(400, 100);
-	
 };
 
 // -----------------------------------------------------------------------------
