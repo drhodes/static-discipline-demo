@@ -38,13 +38,13 @@ StaticCommon.Clip = function(v) {
 };
 
 // Plot of the transfer function containing the user controls
-function TransferPlot(top, left) {
+function TransferPlot(top, left, size) {
 	const LOGIC_LEVEL_LO = StaticCommon.LOGIC_LEVEL_LO;
 	const LOGIC_LEVEL_HI = StaticCommon.LOGIC_LEVEL_HI;
 	var PLOT_TOP = top; // 50
 	var PLOT_LEFT = left; // 50
-	var PLOT_WIDTH = 500;
-	var PLOT_HEIGHT = 500;
+	var PLOT_WIDTH = size;
+	var PLOT_HEIGHT = size;
 	const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
 	const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
 	// slider thickness and breadth is hard coded in the svg string.
@@ -864,12 +864,12 @@ function TransferPlot(top, left) {
 		paper.setup(canvas);
 		
 		var plot = Plot(paper, 700, 1000);
-		var CHANGEME = 500;
-		var margin = NoiseMargin(210, 100, CHANGEME, 150);	
+		var CHANGEME = 400;
+		var margin = NoiseMargin(165, 100, CHANGEME, 125);	
 		plot.WireMargin(margin);
 
 		// hey!
-		var scm = Schematic(50, 100, CHANGEME, 100);
+		var scm = Schematic(25, 100, CHANGEME, 100);
 
 		var tickTock = function() {
 			margin.ToggleDigitalIn();
@@ -1571,7 +1571,7 @@ function Schematic(top, left, width, height) {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-	var plot = TransferPlot(400, 100);
+	var plot = TransferPlot(325, 100, 400);
 };
 
 // -----------------------------------------------------------------------------
