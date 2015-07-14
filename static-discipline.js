@@ -872,7 +872,6 @@ function TransferPlot(top, left, size) {
 		var tickTock = function() {
 			margin.ToggleDigitalIn();
 			scm.Toggle();
-			console.log("hi");
 			setTimeout(tickTock, 1000);
 		};
 		tickTock();
