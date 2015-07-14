@@ -160,7 +160,6 @@ function TransferPlot(top, left, size) {
 			_show_flag = false;
 		}, 500);		
 	}
-
 	
 	// -----------------------------------------------------------------------------
 	function ScrollBarV(paper, left, top) {
@@ -534,10 +533,10 @@ function TransferPlot(top, left, size) {
 		InheritSliderLabel(self, "Vil");
 
 		self.init = function() {
-			// paper js doesn't offer a way to alter the origin with
-			// in a shape, so its position defined at the center of
-			// the sprite. Therefore, the shape the reprsents the slider knob
-			
+			// paper js doesn't offer a way to alter the origin within
+			// a shape, so its position is at the center of the
+			// sprite. Therefore, the shape the reprsents the slider
+			// knob
 		};
 		
 		self.SetX = function(x) {
@@ -605,7 +604,7 @@ function TransferPlot(top, left, size) {
 			var y1 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y()); 
 			var p1 = new paper.Point(x1, y1);
 			// randomPoint on segment (vil, voh) -> (vil, LOGIC_LEVEL_HI)
-			var x2 = plot.sliderVil.X() + smidgen;
+			var x2 = plot.sliderVil.X();
 			var y2 = randomRangeInt(PLOT_TOP, plot.sliderVoh.Y());
 			var p2 = new paper.Point(x2, y2);
 			// randomPoint on segment (vih, 0) -> (vil, Vol)
@@ -690,10 +689,10 @@ function TransferPlot(top, left, size) {
 			self.sliderVol = SliderVol(paper);
 			// set the values to something
 			
-			self.sliderVil.SetV(2);
-			self.sliderVih.SetV(3);
+			self.sliderVil.SetV(1.3);
+			self.sliderVih.SetV(2.2);
 			self.sliderVoh.SetV(4);
-			self.sliderVol.SetV(1);
+			self.sliderVol.SetV(0.2);
 			
 			self.scrollBarH = ScrollBarH(paper, PLOT_LEFT, PLOT_BOTTOM);
 			self.scrollBarV = ScrollBarV(paper, PLOT_LEFT - SLIDER_BREADTH, PLOT_TOP); 
@@ -848,7 +847,6 @@ function TransferPlot(top, left, size) {
 			self.noiseMarginObject = margin;
 		};
 		
-
 		self.UpdateTransfer = function() {
 			self.transferFunc.Update(paper, self);
 		};    
@@ -865,11 +863,11 @@ function TransferPlot(top, left, size) {
 		
 		var plot = Plot(paper, 700, 1000);
 		var CHANGEME = 400;
-		var margin = NoiseMargin(165, 100, CHANGEME, 125);	
+		var margin = NoiseMargin(150, 100, CHANGEME, 125);	
 		plot.WireMargin(margin);
 
 		// hey!
-		var scm = Schematic(25, 100, CHANGEME, 100);
+		var scm = Schematic(0, 100, CHANGEME, 100);
 
 		var tickTock = function() {
 			margin.ToggleDigitalIn();
@@ -888,7 +886,6 @@ function TransferPlot(top, left, size) {
 			paper.view.draw();
 		};
 		plot.UpdateTransfer();
-
 		
 		return plot;
 	}
@@ -1117,7 +1114,7 @@ function NoiseMargin(top, left, width, height) {
 		return self.init();
 	}
 	
-	function BottomNoiseLine(vol, vil) {
+	function BottomNoiseLine(vol, vil, tolerance) {
 		// this is
 		var self = {
 			path: nil,
@@ -1127,7 +1124,7 @@ function NoiseMargin(top, left, width, height) {
 		
 		self.init = function() {
 			var p1 = new paper.Point(LEFT + DEVICE_WIDTH, BOTTOM);
-			var deltaY = ConvertVoltsToPxY(vil) - ConvertVoltsToPxY(vol);
+			var deltaY = ConvertVoltsToPxY(vol+tolerance) - ConvertVoltsToPxY(vol);
 			var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
 			var slope = deltaY / deltaX;
 			var numSteps = 100;
@@ -1136,11 +1133,11 @@ function NoiseMargin(top, left, width, height) {
 			
 			for (var step = 0; step <= numSteps; step++) {
 			 	var x = LEFT + DEVICE_WIDTH + step * dx;
-				var y = randomRangeInt(BOTTOM, slope * step * dx + ConvertVoltsToPxY(vol));
+				var y = randomRangeInt(BOTTOM,
+									   slope * step * dx + ConvertVoltsToPxY(vol));
 				var p = new paper.Point(x, y);
 				segments.push(p);
-			}
-			
+			}			
 			self.path = new paper.Path(segments);
 			self.path.strokeColor = "black";
 			self.path.strokeWidth = .5;
@@ -1153,8 +1150,8 @@ function NoiseMargin(top, left, width, height) {
 		
 		return self.init();
 	}
-	
-	function TopNoiseLine(voh, vih) {
+
+	function TopNoiseLine(voh, vih, tolerance) {
 		// this is
 		var self = {
 			path: nil,
@@ -1164,7 +1161,7 @@ function NoiseMargin(top, left, width, height) {
 		
 		self.init = function() {
 			var p1 = new paper.Point(LEFT + DEVICE_WIDTH, TOP);
-			var deltaY = ConvertVoltsToPxY(vih) - ConvertVoltsToPxY(voh);
+			var deltaY = ConvertVoltsToPxY(vih-tolerance) - ConvertVoltsToPxY(vih);
 			var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
 			var slope = deltaY / deltaX;
 			var numSteps = 100;
@@ -1173,7 +1170,8 @@ function NoiseMargin(top, left, width, height) {
 			
 			for (var step = 0; step <= numSteps; step++) {
 				var x = LEFT + DEVICE_WIDTH + step * dx;
-				var y = randomRangeInt(TOP, slope * step*dx + ConvertVoltsToPxY(voh));
+				var y = randomRangeInt(TOP,
+									   slope * step * dx + ConvertVoltsToPxY(voh));
 				var p = new paper.Point(x, y);
 				segments.push(p);
 			}
@@ -1309,6 +1307,29 @@ function NoiseMargin(top, left, width, height) {
 		};
 		return self.init();
 	}
+
+	function Triangle(p1, p2, p3, color) {
+		// put a green triangle under the noise tolerance region.
+		var self = {
+			path: nil,
+		};
+		self.init = function() {
+			self.path = new paper.Path();
+			self.path.add(p1);
+			self.path.add(p2);
+			self.path.add(p3);
+			self.path.fillColor = color;
+			self.path.opacity = .25;
+			return self;
+		};
+		self.Remove = function() {
+			if (self.path != nil) {
+				self.path.remove();
+			}
+		};
+		
+		return self.init();
+	}
 	
 	function Parts() {
 		var self = {
@@ -1328,7 +1349,9 @@ function NoiseMargin(top, left, width, height) {
 			topNoiseLine: nil,
 			botNoiseLine: nil,
 			marginArrow: nil,
-			digitalIn: false
+			digitalIn: false,
+			greenTriTop: nil,
+			greenTriBottom: nil
 		};
 		
 		self.init = function() {
@@ -1350,8 +1373,81 @@ function NoiseMargin(top, left, width, height) {
 		};
 
 		self.UpdateFrame = function() {
+			self.UpdateGreenTriangle();
 			self.UpdateNoise();
 			self.UpdateArrow();
+		};
+
+		self.MarginTop = function() {
+			return self.voh - self.vih;			
+		};
+		self.MarginBottom = function() {
+			return self.vil - self.vol;
+		};
+
+		self.Tolerance = function() {
+			if (self.TopMarginIsTolerance()) {
+				return self.MarginTop();
+			}
+			return self.MarginBottom();
+		};
+		
+		self.UpdateGreenTriangle = function() {
+			if (self.greenTriTop != nil) {
+				self.greenTriTop.Remove();
+			}
+			if (self.greenTriBottom != nil) {
+				self.greenTriBottom.Remove();
+			}
+			if (self.TopMarginIsTolerance()) {
+				var x1 = self.envelope.topLine.bounds.x;
+				var x2 = x1 + self.envelope.topLine.bounds.width;
+				var y1 = self.envelope.topLine.bounds.y;
+				var y2 = y1 + self.envelope.topLine.bounds.height;
+				var marginY = y2-y1;
+				
+				var p1 = new paper.Point(x1, y1);
+				var p2 = new paper.Point(x2, y2);
+				var p3 = new paper.Point(x2, y1);										 
+				self.greenTriTop = Triangle(p1, p2, p3, "lightgreen");
+				
+				x1 = self.envelope.botLine.bounds.x;
+				x2 = x1 + self.envelope.botLine.bounds.width;
+				y1 = self.envelope.botLine.bounds.y;
+				y2 = y1 + self.envelope.botLine.bounds.height;
+				
+				p1 = new paper.Point(x1, y2);
+				p2 = new paper.Point(x2, y2-marginY);
+				p3 = new paper.Point(x2, y2);										 
+				self.greenTriBottom = Triangle(p1, p2, p3, "lightgreen");				
+			} else {
+				// Bottom margin is the noise tolerance.
+				// bottom triangle
+				var x1 = self.envelope.botLine.bounds.x;
+				var x2 = x1 + self.envelope.botLine.bounds.width;
+				var y1 = self.envelope.botLine.bounds.y;
+				var y2 = y1 + self.envelope.botLine.bounds.height;
+				var marginY = y1 - y2;
+				
+				var p1 = new paper.Point(x1, y2);
+				var p2 = new paper.Point(x2, y1);
+				var p3 = new paper.Point(x2, y2);										 
+				self.greenTriBottom = Triangle(p1, p2, p3, "lightgreen");				
+				// top triangle
+				x1 = self.envelope.topLine.bounds.x;
+				x2 = x1 + self.envelope.topLine.bounds.width;
+				y1 = self.envelope.topLine.bounds.y;
+				y2 = y1 + self.envelope.topLine.bounds.height;
+				
+				p1 = new paper.Point(x1, y1);
+				p2 = new paper.Point(x2, y1 - marginY);
+				p3 = new paper.Point(x2, y1);										 
+				self.greenTriTop = Triangle(p1, p2, p3, "lightgreen");
+			}
+		};
+
+		self.TopMarginIsTolerance = function() {
+			return self.MarginTop() <= self.MarginBottom();
 		};
 		
 		self.UpdateArrow = function() {
@@ -1387,9 +1483,9 @@ function NoiseMargin(top, left, width, height) {
 			}
 
 			if (self.digitalIn == true) {
-				self.topNoise = TopNoiseLine(self.voh, self.vih);
+				self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance());
 			} else {
-				self.botNoise = BottomNoiseLine(self.vol, self.vil);
+				self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance());
 			}
 		};
 
@@ -1571,7 +1667,7 @@ function Schematic(top, left, width, height) {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-	var plot = TransferPlot(325, 100, 400);
+	var plot = TransferPlot(310, 100, 400);
 };
 
 // -----------------------------------------------------------------------------
