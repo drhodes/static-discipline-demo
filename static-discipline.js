@@ -22,6 +22,8 @@
 
 const nil = null;
 
+
+
 var StaticCommon = {};
 StaticCommon.MIT_RED = "#a31f34";
 StaticCommon.LOGIC_LEVEL_LO = 0;
@@ -36,6 +38,8 @@ StaticCommon.Clip = function(v) {
 	}
 	return v;
 };
+
+
 
 // Plot of the transfer function containing the user controls
 function TransferPlot(top, left, size) {
