@@ -1211,7 +1211,7 @@ function NoiseMargin(top, left, width, height) {
         var self = {
             topLine: nil,
             botLine: nil,
-            vil:0, vol:0, vih:0, vil:0
+            vil:0, vol:0, vih:0, voh:0
         };
 
         self.init = function() {
