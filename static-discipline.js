@@ -1123,8 +1123,11 @@ function NoiseMargin(top, left, width, height) {
         return self.init();
     }
 
-    function BottomNoiseLine(vol, vil, tolerance) {
-        // this is
+    // -----------------------------------------------------------------------------
+    // the number of samples in a noise line.
+    const NUM_NOISE_STEPS = 35;
+    
+    function BottomNoiseLine(vol, vil, tolerance, path) {
         var self = {
             path: nil,
             vol: vol,
@@ -1132,35 +1135,49 @@ function NoiseMargin(top, left, width, height) {
         };
 
         self.init = function() {
-            var p1 = new paper.Point(LEFT + DEVICE_WIDTH, BOTTOM);
             var deltaY = ConvertVoltsToPxY(vol+tolerance) - ConvertVoltsToPxY(vol);
             var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
             var slope = deltaY / deltaX;
-            var numSteps = 100;
+            var numSteps = NUM_NOISE_STEPS;
             var dx = deltaX / numSteps;
-            var segments = [];
 
+            if (path == nil) {
+                self.allocate();
+            } else {
+                self.path = path;
+            }
+            
             for (var step = 0; step <= numSteps; step++) {
                 var x = LEFT + DEVICE_WIDTH + step * dx;
                 var y = randomRangeInt(BOTTOM,
                                        slope * step * dx + ConvertVoltsToPxY(vol));
-                var p = new paper.Point(x, y);
+                self.path._segments[step]._point._x = x;
+                self.path._segments[step]._point._y = y;
+                
+            }
+            return self;
+        };
+
+        self.allocate = function() {
+            console.log("Allocating BottomNoiseLine");
+            var segments = [];
+            var numSteps = NUM_NOISE_STEPS;
+            for (var step = 0; step <= numSteps; step++) {
+                var p = new paper.Point(0,0);
                 segments.push(p);
             }
             self.path = new paper.Path(segments);
             self.path.strokeColor = "black";
             self.path.strokeWidth =0.5;
-            return self;
         };
-
-        self.Remove = function() {
-            self.path.remove();
-        };
+        
+        self.Hide = function() { self.path.strokeWidth = 0.0; };
+        self.Show = function() { self.path.strokeWidth = 0.5; };
 
         return self.init();
     }
 
-    function TopNoiseLine(voh, vih, tolerance) {
+    function TopNoiseLine(voh, vih, tolerance, path) {
         // this is
         var self = {
             path: nil,
@@ -1169,31 +1186,43 @@ function NoiseMargin(top, left, width, height) {
         };
 
         self.init = function() {
-            var p1 = new paper.Point(LEFT + DEVICE_WIDTH, TOP);
             var deltaY = ConvertVoltsToPxY(vih-tolerance) - ConvertVoltsToPxY(vih);
             var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
             var slope = deltaY / deltaX;
-            var numSteps = 100;
+            var numSteps = NUM_NOISE_STEPS;
             var dx = deltaX / numSteps;
-            var segments = [];
+
+            if (path == nil) {
+                self.allocate();
+            } else {
+                self.path = path;
+            }
 
             for (var step = 0; step <= numSteps; step++) {
                 var x = LEFT + DEVICE_WIDTH + step * dx;
                 var y = randomRangeInt(TOP,
                                        slope * step * dx + ConvertVoltsToPxY(voh));
-                var p = new paper.Point(x, y);
-                segments.push(p);
+                self.path._segments[step]._point._x = x;
+                self.path._segments[step]._point._y = y;
             }
-
-            self.path = new paper.Path(segments);
-            self.path.strokeColor = "black";
-            self.path.strokeWidth =0.5;
             return self;
         };
 
-        self.Remove = function() {
-            self.path.remove();
+        self.allocate = function() {
+            console.log("Allocating TopNoiseLine");
+            var segments = [];
+            var numSteps = NUM_NOISE_STEPS;
+            for (var step = 0; step <= numSteps; step++) {
+                var p = new paper.Point(0,0);
+                segments.push(p);
+            }
+            self.path = new paper.Path(segments);
+            self.path.strokeColor = "black";
+            self.path.strokeWidth =0.5;
         };
+
+        self.Hide = function() { self.path.strokeWidth = 0.0; };
+        self.Show = function() { self.path.strokeWidth = 0.5; };
 
         return self.init();
     }
@@ -1376,8 +1405,8 @@ function NoiseMargin(top, left, width, height) {
             self.leftVol = InverterLine(LEFT + DEVICE_WIDTH - WIDTH_OF_FORBIDDEN, "Vol");
             self.leftVoh = InverterLine(LEFT + DEVICE_WIDTH - WIDTH_OF_FORBIDDEN, "Voh");
             self.envelope = Envelope();
-            self.topNoise = TopNoiseLine();
-            self.botNoise = BottomNoiseLine();
+            self.topNoise = nil;
+            self.botNoise = nil;
             return self;
         };
 
@@ -1483,18 +1512,22 @@ function NoiseMargin(top, left, width, height) {
             }
         };
 
-        self.UpdateNoise = function() {
-            if (self.topNoise != nil) {
-                self.topNoise.Remove();
+        self.UpdateNoise = function() {            
+            if (self.topNoise == nil) {
+                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance(), nil);
             }
-            if (self.botNoise != nil) {
-                self.botNoise.Remove();
+            if (self.botNoise == nil) {
+                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance(), nil);
             }
-
+            
             if (self.digitalIn == true) {
-                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance());
+                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance(), self.topNoise.path);
+                self.topNoise.Show();
+                self.botNoise.Hide();
             } else {
-                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance());
+                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance(), self.botNoise.path);
+                self.topNoise.Hide();
+                self.botNoise.Show();
             }
         };
 
