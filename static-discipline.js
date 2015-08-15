@@ -869,7 +869,7 @@ function TransferPlot(top, left, size) {
 
         // gapSize is the space between inverters
         var gapSize = 400;
-        var margin = NoiseMargin(150, leftOfColumn2, gapSize, 125);
+        var margin = NoiseMargin(200, leftOfColumn2, gapSize, 125);
         plot.WireMargin(margin); 
 
         // hey!
