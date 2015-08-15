@@ -24,8 +24,6 @@
 
 const nil = null;
 
-
-
 var StaticCommon = {};
 StaticCommon.MIT_RED = "#a31f34";
 StaticCommon.LOGIC_LEVEL_LO = 0;
@@ -41,19 +39,19 @@ StaticCommon.Clip = function(v) {
     return v;
 };
 
-
-
 // Plot of the transfer function containing the user controls
 function TransferPlot(top, left, size) {
     const LOGIC_LEVEL_LO = StaticCommon.LOGIC_LEVEL_LO;
     const LOGIC_LEVEL_HI = StaticCommon.LOGIC_LEVEL_HI;
-    var PLOT_TOP = top; // 50
-    var PLOT_LEFT = left; // 50
+    var PLOT_TOP = top; 
+    var PLOT_LEFT = left;
     var PLOT_WIDTH = size;
     var PLOT_HEIGHT = size;
-    const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH; //630;
+    const PLOT_RIGHT = PLOT_LEFT + PLOT_WIDTH;
     const PLOT_BOTTOM = PLOT_TOP + PLOT_HEIGHT;
-    // slider thickness and breadth is hard coded in the svg string.
+    
+    // slider thickness and breadth is hard coded in the path string as
+    // extracted from inkscapes exported .svg found in ./design/slider.svg
     const SLIDER_THICK = 10;
     const SLIDER_BREADTH = 30;
     const ACTIVE_SLIDER_COLOR = "blue";
@@ -861,17 +859,21 @@ function TransferPlot(top, left, size) {
     }
 
     // -----------------------------------------------------------------------------
-    function init() {
+    function init(top) {
         var canvas = document.getElementById('myCanvas');
         paper.setup(canvas);
 
-        var plot = Plot(paper, 700, 1000);
-        var CHANGEME = 400;
-        var margin = NoiseMargin(150, 100, CHANGEME, 125);
-        plot.WireMargin(margin);
+        const leftOfColumn2 = 550;
+        
+        var plot = Plot(paper, 1100, 1000);
+
+        // gapSize is the space between inverters
+        var gapSize = 400;
+        var margin = NoiseMargin(150, leftOfColumn2, gapSize, 125);
+        plot.WireMargin(margin); 
 
         // hey!
-        var scm = Schematic(0, 100, CHANGEME, 100);
+        var scm = Schematic(top, leftOfColumn2, gapSize, 100);
 
         var tickTock = function() {
             margin.ToggleDigitalIn();
@@ -886,10 +888,8 @@ function TransferPlot(top, left, size) {
             plot.UpdateForbidden();
             plot.UpdateSliders();
 
-
             if (plot.SlidersAdjusted()) {
                 plot.UpdateTransfer();
-                //console.log("frame works: " + count);
             }
 
             paper.view.draw();
@@ -898,7 +898,7 @@ function TransferPlot(top, left, size) {
 
         return plot;
     }
-    return init();
+    return init(top);
 }
 
 // Noise Margin
@@ -1316,7 +1316,7 @@ function NoiseMargin(top, left, width, height) {
             var p = new paper.Point(from.x + nudge, mid);
             self.text = new paper.PointText(p);
             self.text.fillColor = 'black';
-            self.text.content = "noise tolerance";
+            self.text.content = "noise tol.";
             self.text.fontFamily = "courier";
             self.text.fontSize = 16;
             self.text.position.y -= self.text.bounds.height/4;
@@ -1661,9 +1661,11 @@ function Schematic(top, left, width, height) {
         };
 
         self.drawLines = function(invL, invR) {
-            self.lineL = self.drawLine(0, invL.LeftSide());
+            self.lineL = self.drawLine(invL.LeftSide() - DEVICE_WIDTH/2,
+                                       invL.LeftSide());            
             self.lineM = self.drawLine(invL.RightSide(), invR.LeftSide());
-            self.lineR = self.drawLine(invR.RightSide(), 9999);
+            self.lineR = self.drawLine(invR.RightSide(),
+                                       invR.RightSide() + DEVICE_WIDTH/2);
             self.Toggle();
         };
 
@@ -1708,7 +1710,7 @@ function Schematic(top, left, width, height) {
 
 // -----------------------------------------------------------------------------
 window.onload = function() {
-    var plot = TransferPlot(310, 100, 400);
+    var plot = TransferPlot(20, 75, 400);
 };
 
 // -----------------------------------------------------------------------------
