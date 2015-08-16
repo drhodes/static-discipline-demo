@@ -860,19 +860,21 @@ function TransferPlot(top, left, size) {
 
     // -----------------------------------------------------------------------------
     function init(top) {
+        // This should be refactored into a 4th manager class that
+        // controls the three elements, Plot, Schematic and Noise
+        
         var canvas = document.getElementById('myCanvas');
         paper.setup(canvas);
 
         const leftOfColumn2 = 550;
         
-        var plot = Plot(paper, 1100, 1000);
+        var plot = Plot(paper, 1100, 600);
 
         // gapSize is the space between inverters
         var gapSize = 400;
         var margin = NoiseMargin(200, leftOfColumn2, gapSize, 125);
         plot.WireMargin(margin); 
 
-        // hey!
         var scm = Schematic(top, leftOfColumn2, gapSize, 100);
 
         var tickTock = function() {
@@ -881,10 +883,8 @@ function TransferPlot(top, left, size) {
             setTimeout(tickTock, 1000);
         };
         tickTock();
-
-        var count=0;
+        
         paper.view.onFrame = function(event) {
-            count++;
             plot.UpdateForbidden();
             plot.UpdateSliders();
 
