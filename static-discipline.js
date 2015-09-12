@@ -1127,7 +1127,7 @@ function NoiseMargin(top, left, width, height) {
     // the number of samples in a noise line.
     const NUM_NOISE_STEPS = 35;
     
-    function BottomNoiseLine(vol, vil, tolerance, path) {
+    function BottomNoiseLine(vol, vil, immunity, path) {
         var self = {
             path: nil,
             vol: vol,
@@ -1135,7 +1135,7 @@ function NoiseMargin(top, left, width, height) {
         };
 
         self.init = function() {
-            var deltaY = ConvertVoltsToPxY(vol+tolerance) - ConvertVoltsToPxY(vol);
+            var deltaY = ConvertVoltsToPxY(vol+immunity) - ConvertVoltsToPxY(vol);
             var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
             var slope = deltaY / deltaX;
             var numSteps = NUM_NOISE_STEPS;
@@ -1177,7 +1177,7 @@ function NoiseMargin(top, left, width, height) {
         return self.init();
     }
 
-    function TopNoiseLine(voh, vih, tolerance, path) {
+    function TopNoiseLine(voh, vih, immunity, path) {
         // this is
         var self = {
             path: nil,
@@ -1186,7 +1186,7 @@ function NoiseMargin(top, left, width, height) {
         };
 
         self.init = function() {
-            var deltaY = ConvertVoltsToPxY(vih-tolerance) - ConvertVoltsToPxY(vih);
+            var deltaY = ConvertVoltsToPxY(vih-immunity) - ConvertVoltsToPxY(vih);
             var deltaX = RIGHT - LEFT - (2 * DEVICE_WIDTH);
             var slope = deltaY / deltaX;
             var numSteps = NUM_NOISE_STEPS;
@@ -1316,7 +1316,7 @@ function NoiseMargin(top, left, width, height) {
             var p = new paper.Point(from.x + nudge, mid);
             self.text = new paper.PointText(p);
             self.text.fillColor = 'black';
-            self.text.content = "noise tol.";
+            self.text.content = "noise immun.";
             self.text.fontFamily = "courier";
             self.text.fontSize = 16;
             self.text.position.y -= self.text.bounds.height/4;
@@ -1347,7 +1347,7 @@ function NoiseMargin(top, left, width, height) {
     }
 
     function Triangle(p1, p2, p3, color) {
-        // put a green triangle under the noise tolerance region.
+        // put a green triangle under the noise immunity region.
         var self = {
             path: nil,
         };
@@ -1423,8 +1423,8 @@ function NoiseMargin(top, left, width, height) {
             return self.vil - self.vol;
         };
 
-        self.Tolerance = function() {
-            if (self.TopMarginIsTolerance()) {
+        self.Immunity = function() {
+            if (self.TopMarginIsImmunity()) {
                 return self.MarginTop();
             }
             return self.MarginBottom();
@@ -1437,7 +1437,7 @@ function NoiseMargin(top, left, width, height) {
             if (self.greenTriBottom != nil) {
                 self.greenTriBottom.Remove();
             }
-            if (self.TopMarginIsTolerance()) {
+            if (self.TopMarginIsImmunity()) {
                 var x1 = self.envelope.topLine.bounds.x;
                 var x2 = x1 + self.envelope.topLine.bounds.width;
                 var y1 = self.envelope.topLine.bounds.y;
@@ -1459,7 +1459,7 @@ function NoiseMargin(top, left, width, height) {
                 p3 = new paper.Point(x2, y2);
                 self.greenTriBottom = Triangle(p1, p2, p3, "lightgreen");
             } else {
-                // Bottom margin is the noise tolerance.
+                // Bottom margin is the noise immunity.
                 // bottom triangle
                 var x1 = self.envelope.botLine.bounds.x;
                 var x2 = x1 + self.envelope.botLine.bounds.width;
@@ -1484,7 +1484,7 @@ function NoiseMargin(top, left, width, height) {
             }
         };
 
-        self.TopMarginIsTolerance = function() {
+        self.TopMarginIsImmunity = function() {
             return self.MarginTop() <= self.MarginBottom();
         };
 
@@ -1514,18 +1514,18 @@ function NoiseMargin(top, left, width, height) {
 
         self.UpdateNoise = function() {            
             if (self.topNoise == nil) {
-                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance(), nil);
+                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Immunity(), nil);
             }
             if (self.botNoise == nil) {
-                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance(), nil);
+                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Immunity(), nil);
             }
             
             if (self.digitalIn == true) {
-                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Tolerance(), self.topNoise.path);
+                self.topNoise = TopNoiseLine(self.voh, self.vih, self.Immunity(), self.topNoise.path);
                 self.topNoise.Show();
                 self.botNoise.Hide();
             } else {
-                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Tolerance(), self.botNoise.path);
+                self.botNoise = BottomNoiseLine(self.vol, self.vil, self.Immunity(), self.botNoise.path);
                 self.topNoise.Hide();
                 self.botNoise.Show();
             }
