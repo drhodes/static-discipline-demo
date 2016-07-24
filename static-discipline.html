@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title> static discipline </title>
+    <!-- <script type="text/javascript" src="js/paper-full.js"></script> -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.22/paper-full.min.js"></script>    
+    <script type="text/javascript" src="static-discipline.js"></script>
+  </head>
+  <body>
+    <center>
+      <h3>Static Discipline Demo</h3>
+      <hr></hr>
+      <canvas id="myCanvas" width=1100 height=500></canvas>
+    </center>
+	<center>
+      <h4>
+      </h4>
+      <div style="width: 500px;">
+        <h3>
+          The plot is interactive, the four black trapezoids are sliders :)
+        </h3>
+        
+        <p><b>Description</b></p>
+        <p>
+          There are three sections in this demo. The left part shows a
+          transfer function. On the right, there is a schematic
+          showing two inverters with a data line in between that flips
+          between high and low voltages. Below the schematic is the
+          third section.  This is where noise can be seen accumulating
+          on the data line. The red bars in each box correspond to the
+          parameters dictated by the static discipline as set by the
+          user who manipulate the interactive plot of the transfer
+          function. To the far right, the noise immunity is
+          displayed, shown as the minimum of the high and low noise
+          margins.
+        </p>      
+        <p>
+          This demo works best on chrome. It is known to work on
+          linux (sometimes android), macos, and windows7 with IE.
+        </p>        
+        <p>
+          Slower machines running firefox will probably have severe
+          performance issues.
+        </p>
+        <p> full source can be found at
+          <a href="https://github.com/drhodes/static-discipline-demo">github</a>
+        </p>
+        <p> Reference material from
+          <a href="https://www.edx.org/course/circuits-electronics-mitx-6-002x-0">6.002x</a>
+          and
+          <a href="https://www.edx.org/course/computation-structures-part-1-digital-mitx-6-004-1x">6.004x</a>
+          was used.
+        </p> 
+
+        
+    </center>
+    
+  </body>
+</html>
