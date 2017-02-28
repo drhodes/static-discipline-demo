@@ -27,7 +27,7 @@ const nil = null;
 var StaticCommon = {};
 StaticCommon.MIT_RED = "#a31f34";
 StaticCommon.LOGIC_LEVEL_LO = 0;
-StaticCommon.LOGIC_LEVEL_HI = 5;
+StaticCommon.LOGIC_LEVEL_HI = 1;
 StaticCommon.COLOR_OF_FORBIDDEN = StaticCommon.MIT_RED;
 StaticCommon.Clip = function(v) {
     if (v < StaticCommon.LOGIC_LEVEL_LO) {
@@ -689,11 +689,11 @@ function TransferPlot(top, left, size) {
             self.sliderVoh = SliderVoh(paper);
             self.sliderVol = SliderVol(paper);
             // set the values to something
-
-            self.sliderVil.SetV(1.3);
-            self.sliderVih.SetV(2.2);
-            self.sliderVoh.SetV(4);
-            self.sliderVol.SetV(0.2);
+            
+            self.sliderVil.SetV(0.3);
+            self.sliderVih.SetV(0.6);
+            self.sliderVoh.SetV(.9);
+            self.sliderVol.SetV(.2);
 
             self.scrollBarH = ScrollBarH(paper, PLOT_LEFT, PLOT_BOTTOM);
             self.scrollBarV = ScrollBarV(paper, PLOT_LEFT - SLIDER_BREADTH, PLOT_TOP);
